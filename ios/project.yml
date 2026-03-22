@@ -44,5 +44,6 @@ targets:
           - CFBundleURLSchemes:
               - oak
             CFBundleURLName: dk.oakapp.callback
+        UILaunchScreen: {}
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true

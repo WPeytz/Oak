@@ -35,7 +35,23 @@ class APIClient {
 
         self.decoder = JSONDecoder()
         self.decoder.keyDecodingStrategy = .convertFromSnakeCase
-        self.decoder.dateDecodingStrategy = .iso8601
+        self.decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let string = try container.decode(String.self)
+            // Try ISO 8601 datetime first, then plain date
+            let iso = ISO8601DateFormatter()
+            if let date = iso.date(from: string) { return date }
+            iso.formatOptions = [.withFullDate, .withFractionalSeconds]
+            if let date = iso.date(from: string) { return date }
+            let df = DateFormatter()
+            df.dateFormat = "yyyy-MM-dd"
+            if let date = df.date(from: string) { return date }
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSZ"
+            if let date = df.date(from: string) { return date }
+            df.dateFormat = "yyyy-MM-dd'T'HH:mm:ssZ"
+            if let date = df.date(from: string) { return date }
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Cannot parse date: \(string)")
+        }
 
         self.encoder = JSONEncoder()
         self.encoder.keyEncodingStrategy = .convertToSnakeCase
@@ -119,6 +135,26 @@ class APIClient {
 
     func listTransactions(userId: UUID) async throws -> [Transaction] {
         try await get("api/transactions/\(userId)")
+    }
+
+    // MARK: - Savings Goals
+
+    func listSavingsGoals(userId: UUID) async throws -> [SavingsGoal] {
+        try await get("api/savings-goals/\(userId)")
+    }
+
+    func createSavingsGoal(userId: UUID, name: String, targetAmount: Double) async throws -> SavingsGoal {
+        try await post(
+            "api/savings-goals/\(userId)",
+            body: CreateSavingsGoalRequest(name: name, targetAmount: targetAmount)
+        )
+    }
+
+    func updateSavingsGoal(userId: UUID, goalId: UUID, name: String? = nil, targetAmount: Double? = nil, currentAmount: Double? = nil) async throws -> SavingsGoal {
+        try await put(
+            "api/savings-goals/\(userId)/\(goalId)",
+            body: UpdateSavingsGoalRequest(name: name, targetAmount: targetAmount, currentAmount: currentAmount)
+        )
     }
 
     // MARK: - CSV Import

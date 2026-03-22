@@ -5,17 +5,24 @@ struct InsightsView: View {
     @State private var transactions: [Transaction] = []
     @State private var dashboard: Dashboard?
     @State private var isLoading = true
+    @State private var selectedCategory: String?
 
     var body: some View {
         NavigationStack {
-            ScrollView {
+            List {
                 if isLoading {
-                    ProgressView()
-                        .padding(.top, 80)
+                    Section {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                            Spacer()
+                        }
+                        .padding(.vertical, 40)
+                    }
                 } else {
-                    VStack(spacing: 20) {
-                        // Summary cards
-                        if let dashboard {
+                    // Summary
+                    if let dashboard {
+                        Section {
                             HStack(spacing: 12) {
                                 SummaryPill(
                                     label: "Income",
@@ -33,36 +40,66 @@ struct InsightsView: View {
                                     color: dashboard.totalIncome > dashboard.totalSpending ? .green : .red
                                 )
                             }
-
-                            // Category breakdown
-                            if !dashboard.topCategories.isEmpty {
-                                SpendingInsightsCard(
-                                    categories: dashboard.topCategories,
-                                    totalSpending: dashboard.totalSpending
-                                )
-                            }
+                            .listRowInsets(EdgeInsets())
+                            .listRowBackground(Color.clear)
                         }
 
-                        // Recent transactions
-                        if !transactions.isEmpty {
-                            VStack(alignment: .leading, spacing: 12) {
-                                Text("Recent transactions")
-                                    .font(.headline)
-
-                                ForEach(transactions.prefix(20)) { txn in
-                                    TransactionRow(transaction: txn)
+                        // Tappable category breakdown
+                        if !dashboard.topCategories.isEmpty {
+                            Section("Categories") {
+                                ForEach(dashboard.topCategories) { category in
+                                    CategoryTapRow(
+                                        category: category,
+                                        maxTotal: dashboard.topCategories.first?.total ?? 1,
+                                        isSelected: selectedCategory == category.category
+                                    )
+                                    .contentShape(Rectangle())
+                                    .onTapGesture {
+                                        withAnimation {
+                                            if selectedCategory == category.category {
+                                                selectedCategory = nil
+                                            } else {
+                                                selectedCategory = category.category
+                                            }
+                                        }
+                                    }
                                 }
                             }
-                            .padding(20)
-                            .background(.ultraThinMaterial)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
                         }
                     }
-                    .padding(.horizontal)
-                    .padding(.bottom, 24)
+
+                    // Transactions — filtered by selected category or show all
+                    let displayed = filteredTransactions
+                    if !displayed.isEmpty {
+                        let grouped = groupTransactions(displayed)
+                        ForEach(grouped, id: \.date) { group in
+                            Section {
+                                ForEach(group.transactions) { txn in
+                                    TransactionRow(transaction: txn)
+                                }
+                            } header: {
+                                Text(group.displayDate)
+                            }
+                        }
+                    } else if selectedCategory != nil {
+                        Section {
+                            Text("No transactions in this category")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
+            .listStyle(.insetGrouped)
             .navigationTitle("Insights")
+            .toolbar {
+                if selectedCategory != nil {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Show All") {
+                            withAnimation { selectedCategory = nil }
+                        }
+                    }
+                }
+            }
             .task {
                 await loadData()
             }
@@ -70,6 +107,19 @@ struct InsightsView: View {
                 await loadData()
             }
         }
+    }
+
+    private var filteredTransactions: [Transaction] {
+        guard let cat = selectedCategory else { return transactions }
+        return transactions.filter { $0.normalizedCategory == cat }
+    }
+
+    private func groupTransactions(_ txns: [Transaction]) -> [TransactionGroup] {
+        let grouped = Dictionary(grouping: txns) { $0.bookedAt }
+        return grouped.map { date, items in
+            TransactionGroup(date: date, transactions: items)
+        }
+        .sorted { $0.date > $1.date }
     }
 
     private func loadData() async {
@@ -81,6 +131,83 @@ struct InsightsView: View {
             transactions = try await t
         } catch {}
         isLoading = false
+    }
+}
+
+// MARK: - Transaction grouping
+
+private struct TransactionGroup {
+    let date: Date
+    let transactions: [Transaction]
+
+    var displayDate: String {
+        let formatter = DateFormatter()
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            return "Today"
+        } else if calendar.isDateInYesterday(date) {
+            return "Yesterday"
+        } else if calendar.isDate(date, equalTo: Date(), toGranularity: .year) {
+            formatter.dateFormat = "EEEE d MMMM"
+        } else {
+            formatter.dateFormat = "d MMMM yyyy"
+        }
+        return formatter.string(from: date)
+    }
+}
+
+// MARK: - Category row (tappable)
+
+private struct CategoryTapRow: View {
+    let category: CategoryBreakdown
+    let maxTotal: Double
+    let isSelected: Bool
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: iconForCategory(category.category))
+                    .font(.caption)
+                    .foregroundStyle(colorForCategory(category.category))
+                    .frame(width: 24)
+
+                Text(category.displayName)
+                    .font(.subheadline)
+
+                if category.isEssential {
+                    Text("Essential")
+                        .font(.system(size: 9, weight: .medium))
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(.blue.opacity(0.1))
+                        .foregroundStyle(.blue)
+                        .clipShape(Capsule())
+                }
+
+                Spacer()
+
+                Text(formatDKK(category.total))
+                    .font(.subheadline.weight(.medium))
+
+                Text("(\(category.count))")
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+
+                Image(systemName: isSelected ? "chevron.down" : "chevron.right")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
+
+            // Bar
+            GeometryReader { geo in
+                RoundedRectangle(cornerRadius: 3)
+                    .fill(colorForCategory(category.category).opacity(isSelected ? 0.8 : 0.5))
+                    .frame(width: max(4, geo.size.width * category.total / maxTotal))
+            }
+            .frame(height: 5)
+        }
+        .padding(.vertical, 4)
+        .background(isSelected ? colorForCategory(category.category).opacity(0.05) : Color.clear)
     }
 }
 
@@ -114,11 +241,11 @@ private struct TransactionRow: View {
 
     var body: some View {
         HStack(spacing: 12) {
-            Image(systemName: categoryIcon)
+            Image(systemName: iconForCategory(transaction.normalizedCategory ?? "other"))
                 .font(.caption)
-                .foregroundStyle(categoryColor)
+                .foregroundStyle(colorForCategory(transaction.normalizedCategory ?? "other"))
                 .frame(width: 28, height: 28)
-                .background(categoryColor.opacity(0.1))
+                .background(colorForCategory(transaction.normalizedCategory ?? "other").opacity(0.1))
                 .clipShape(RoundedRectangle(cornerRadius: 6))
 
             VStack(alignment: .leading, spacing: 2) {
@@ -133,42 +260,9 @@ private struct TransactionRow: View {
 
             Spacer()
 
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(amountText)
-                    .font(.subheadline.weight(.medium))
-                    .foregroundStyle(transaction.amount > 0 ? .green : .primary)
-
-                Text(formattedDate)
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-        }
-        .padding(.vertical, 2)
-    }
-
-    private var categoryIcon: String {
-        guard let cat = transaction.normalizedCategory else { return "questionmark.circle" }
-        switch cat {
-        case "groceries": return "cart"
-        case "eating_out": return "fork.knife"
-        case "shopping": return "bag"
-        case "transport": return "car"
-        case "subscriptions": return "repeat"
-        case "income": return "arrow.down.circle"
-        default: return "circle"
-        }
-    }
-
-    private var categoryColor: Color {
-        guard let cat = transaction.normalizedCategory else { return .gray }
-        switch cat {
-        case "groceries": return .green
-        case "eating_out": return .orange
-        case "shopping": return .pink
-        case "transport": return .blue
-        case "subscriptions": return .purple
-        case "income": return .green
-        default: return .gray
+            Text(amountText)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(transaction.amount > 0 ? .green : .primary)
         }
     }
 
@@ -186,11 +280,45 @@ private struct TransactionRow: View {
         let formatted = formatter.string(from: NSNumber(value: abs(value))) ?? "\(Int(abs(value)))"
         return value >= 0 ? "+\(formatted) kr" : "-\(formatted) kr"
     }
+}
 
-    private var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "d MMM"
-        return formatter.string(from: transaction.bookedAt)
+// MARK: - Shared helpers
+
+private func iconForCategory(_ cat: String) -> String {
+    switch cat {
+    case "groceries": return "cart"
+    case "eating_out": return "fork.knife"
+    case "shopping": return "bag"
+    case "transport": return "car"
+    case "housing": return "house"
+    case "utilities": return "bolt"
+    case "subscriptions": return "repeat"
+    case "health": return "heart"
+    case "education": return "book"
+    case "entertainment": return "film"
+    case "travel": return "airplane"
+    case "income": return "arrow.down.circle"
+    case "transfers": return "arrow.left.arrow.right"
+    default: return "circle"
+    }
+}
+
+private func colorForCategory(_ cat: String) -> Color {
+    switch cat {
+    case "groceries": return .green
+    case "eating_out": return .orange
+    case "shopping": return .pink
+    case "transport": return .blue
+    case "housing": return .indigo
+    case "utilities": return .yellow
+    case "subscriptions": return .purple
+    case "health": return .red
+    case "education": return .cyan
+    case "entertainment": return .mint
+    case "travel": return .teal
+    case "income": return .green
+    case "transfers": return .teal
+    default: return .gray
     }
 }
 

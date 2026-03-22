@@ -24,6 +24,27 @@ struct Transaction: Codable, Identifiable {
     let merchant: String?
     let normalizedCategory: String?
     let isEssential: Bool
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        bankAccountId = try c.decode(UUID.self, forKey: .bankAccountId)
+        bookedAt = try c.decode(Date.self, forKey: .bookedAt)
+        currency = try c.decode(String.self, forKey: .currency)
+        merchant = try c.decodeIfPresent(String.self, forKey: .merchant)
+        normalizedCategory = try c.decodeIfPresent(String.self, forKey: .normalizedCategory)
+        isEssential = try c.decode(Bool.self, forKey: .isEssential)
+        // amount comes as string from the API
+        if let str = try? c.decode(String.self, forKey: .amount) {
+            amount = Decimal(string: str) ?? 0
+        } else {
+            amount = try c.decode(Decimal.self, forKey: .amount)
+        }
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id, bankAccountId, bookedAt, amount, currency, merchant, normalizedCategory, isEssential
+    }
 }
 
 struct TreeState: Codable, Identifiable {
@@ -126,6 +147,28 @@ struct SyncResponse: Codable {
 
 struct CSVImportResponse: Codable {
     let transactionsImported: Int
+}
+
+// MARK: - Savings Goals
+
+struct SavingsGoal: Codable, Identifiable {
+    let id: UUID
+    let name: String
+    let targetAmount: Double
+    let currentAmount: Double
+    let sortOrder: Int
+    let progress: Double
+}
+
+struct CreateSavingsGoalRequest: Codable {
+    let name: String
+    let targetAmount: Double
+}
+
+struct UpdateSavingsGoalRequest: Codable {
+    let name: String?
+    let targetAmount: Double?
+    let currentAmount: Double?
 }
 
 // MARK: - Request bodies

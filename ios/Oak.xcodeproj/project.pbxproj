@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		03A18A3D6B961FDB215D3A03 /* InsightsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EABD3FF82A0E0F6023EB75A /* InsightsView.swift */; };
+		08A0728CE8ED8A76A38D0BAA /* GoalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D27031E60C578F8FB685156B /* GoalsView.swift */; };
 		08C99CF905F186C66FCE2477 /* OakApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5FC74868EE62E957E5A2879 /* OakApp.swift */; };
 		13FE95459C9275829BB734A4 /* SpendingInsightsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57B0B811A782A3F16C6CDE27 /* SpendingInsightsCard.swift */; };
 		2E881C9A3DAC8691BED87025 /* CreateAccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0A4BDA53A0AA9EDD84FE9D01 /* CreateAccountView.swift */; };
@@ -26,12 +27,15 @@
 		B9CC17D0DB3905025CA5A697 /* OnboardingCompleteView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA4F951D6FDFEC0227C0CE70 /* OnboardingCompleteView.swift */; };
 		BF5BA60A2E6F42597D34D070 /* SetGoalsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 733B5B5128FC5A6383620F82 /* SetGoalsView.swift */; };
 		DA64280D6F2B850C5AEE7C6E /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F9456E6DF1FE9B977882F26D /* HomeView.swift */; };
+		EB2071E153E91BC3D3048199 /* GoalTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA6B4BAFB569F0EF34B68E26 /* GoalTreeView.swift */; };
+		EC6C7FC97D7AB9D6A5B250D8 /* HealthBarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DEF397AA6624106DD39EEA64 /* HealthBarView.swift */; };
 		F24FBF87DAC8CD28FB386062 /* WelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E40A5BF32FFABF9CC42E8B9 /* WelcomeView.swift */; };
 		F44F185BF5726BA32DE40C90 /* OnboardingFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 305EDE73C9625494CB3DA659 /* OnboardingFlow.swift */; };
+		F9D98827320118248D78D4F6 /* PixelTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD507FA2624E28DFAA796B59 /* PixelTreeView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		03D90651E33152E3C952CE1D /* Oak.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Oak.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		03D90651E33152E3C952CE1D /* Oak.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Oak.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		08E0A4A56EADCDB21276DE81 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0A4BDA53A0AA9EDD84FE9D01 /* CreateAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAccountView.swift; sourceTree = "<group>"; };
 		0E40A5BF32FFABF9CC42E8B9 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
@@ -49,8 +53,12 @@
 		A1671466A243BC9D075B68F3 /* ConnectBankView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectBankView.swift; sourceTree = "<group>"; };
 		A555F4BDFD0930F2A23386B5 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
 		AA4F951D6FDFEC0227C0CE70 /* OnboardingCompleteView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingCompleteView.swift; sourceTree = "<group>"; };
+		BA6B4BAFB569F0EF34B68E26 /* GoalTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalTreeView.swift; sourceTree = "<group>"; };
+		BD507FA2624E28DFAA796B59 /* PixelTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PixelTreeView.swift; sourceTree = "<group>"; };
 		C5FC74868EE62E957E5A2879 /* OakApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OakApp.swift; sourceTree = "<group>"; };
 		C873AB2AB014B1086307F078 /* Models.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Models.swift; sourceTree = "<group>"; };
+		D27031E60C578F8FB685156B /* GoalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoalsView.swift; sourceTree = "<group>"; };
+		DEF397AA6624106DD39EEA64 /* HealthBarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HealthBarView.swift; sourceTree = "<group>"; };
 		E43285E82910BB45D9CF9000 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		F9456E6DF1FE9B977882F26D /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		FA02E7449336FBD2CE0FC3BF /* BudgetProgressCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BudgetProgressCard.swift; sourceTree = "<group>"; };
@@ -68,6 +76,7 @@
 		052D8DC73DE56C8EF33497E7 /* Features */ = {
 			isa = PBXGroup;
 			children = (
+				E374CFA9E707F878F867AB45 /* Goals */,
 				E39E286BACE177B077220115 /* Home */,
 				03354E5013DDEC54AB317EF0 /* Insights */,
 				99C4F000DB4611189B908B69 /* Onboarding */,
@@ -199,10 +208,21 @@
 			children = (
 				2B0E54BB1C2A486F99128D26 /* ActionsCard.swift */,
 				FA02E7449336FBD2CE0FC3BF /* BudgetProgressCard.swift */,
+				DEF397AA6624106DD39EEA64 /* HealthBarView.swift */,
 				58F07A6F60AFA0448BB56995 /* MoneyTreeCard.swift */,
+				BD507FA2624E28DFAA796B59 /* PixelTreeView.swift */,
 				57B0B811A782A3F16C6CDE27 /* SpendingInsightsCard.swift */,
 			);
 			path = Components;
+			sourceTree = "<group>";
+		};
+		E374CFA9E707F878F867AB45 /* Goals */ = {
+			isa = PBXGroup;
+			children = (
+				D27031E60C578F8FB685156B /* GoalsView.swift */,
+				BA6B4BAFB569F0EF34B68E26 /* GoalTreeView.swift */,
+			);
+			path = Goals;
 			sourceTree = "<group>";
 		};
 		E39E286BACE177B077220115 /* Home */ = {
@@ -242,7 +262,12 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
-				LastUpgradeCheck = 2600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					FC7E40F4DC44200CB4F10CC2 = {
+						DevelopmentTeam = "";
+					};
+				};
 			};
 			buildConfigurationList = 532456882F461C1352BFE531 /* Build configuration list for PBXProject "Oak" */;
 			developmentRegion = en;
@@ -287,6 +312,9 @@
 				8040B0B320D6D7DF7085823C /* ConnectBankView.swift in Sources */,
 				725ACFE94B4FB80BF5724E1D /* ContentView.swift in Sources */,
 				2E881C9A3DAC8691BED87025 /* CreateAccountView.swift in Sources */,
+				EB2071E153E91BC3D3048199 /* GoalTreeView.swift in Sources */,
+				08A0728CE8ED8A76A38D0BAA /* GoalsView.swift in Sources */,
+				EC6C7FC97D7AB9D6A5B250D8 /* HealthBarView.swift in Sources */,
 				DA64280D6F2B850C5AEE7C6E /* HomeView.swift in Sources */,
 				03A18A3D6B961FDB215D3A03 /* InsightsView.swift in Sources */,
 				49CAD38ED4F59238B0C81A9B /* Models.swift in Sources */,
@@ -294,6 +322,7 @@
 				08C99CF905F186C66FCE2477 /* OakApp.swift in Sources */,
 				B9CC17D0DB3905025CA5A697 /* OnboardingCompleteView.swift in Sources */,
 				F44F185BF5726BA32DE40C90 /* OnboardingFlow.swift in Sources */,
+				F9D98827320118248D78D4F6 /* PixelTreeView.swift in Sources */,
 				BF5BA60A2E6F42597D34D070 /* SetGoalsView.swift in Sources */,
 				81336A95B5914AB8E43AD976 /* SettingsView.swift in Sources */,
 				13FE95459C9275829BB734A4 /* SpendingInsightsCard.swift in Sources */,
@@ -341,10 +370,9 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = 6MRTNKSAGU;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -366,7 +394,6 @@
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.9;
@@ -409,10 +436,9 @@
 				COPY_PHASE_STRIP = NO;
 				CURRENT_PROJECT_VERSION = 1;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = 6MRTNKSAGU;
+				DEVELOPMENT_TEAM = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -427,7 +453,6 @@
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = iphoneos;
-				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.9;
