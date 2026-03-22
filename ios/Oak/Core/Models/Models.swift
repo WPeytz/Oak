@@ -124,6 +124,10 @@ struct SyncResponse: Codable {
     let transactionsSynced: Int
 }
 
+struct CSVImportResponse: Codable {
+    let transactionsImported: Int
+}
+
 // MARK: - Request bodies
 
 struct CreateUserRequest: Codable {

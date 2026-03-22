@@ -1,11 +1,15 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @State private var showGoalEditor = false
-    @State private var budgetText = ""
-    @State private var savingsText = ""
-    @State private var isSaving = false
+    @State private var showConnectBank = false
+    @State private var showCSVPicker = false
+    @State private var isSyncing = false
+    @State private var syncResult: String?
+    @State private var isImporting = false
+    @State private var importResult: String?
 
     var body: some View {
         NavigationStack {
@@ -39,11 +43,56 @@ struct SettingsView: View {
                     }
                 }
 
+                Section("Bank") {
+                    Button {
+                        showConnectBank = true
+                    } label: {
+                        HStack {
+                            Label("Connect Bank", systemImage: "building.columns")
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+
                 Section("Sync") {
                     Button {
                         Task { await syncTransactions() }
                     } label: {
-                        Label("Sync Transactions Now", systemImage: "arrow.triangle.2.circlepath")
+                        HStack {
+                            Label("Sync Transactions Now", systemImage: "arrow.triangle.2.circlepath")
+                            Spacer()
+                            if isSyncing {
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .disabled(isSyncing)
+
+                    Button {
+                        showCSVPicker = true
+                    } label: {
+                        HStack {
+                            Label("Import CSV", systemImage: "doc.badge.plus")
+                            Spacer()
+                            if isImporting {
+                                ProgressView()
+                            }
+                        }
+                    }
+                    .disabled(isImporting)
+
+                    if let syncResult {
+                        Text(syncResult)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    if let importResult {
+                        Text(importResult)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                     }
                 }
 
@@ -57,18 +106,83 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
+            .sheet(isPresented: $showConnectBank) {
+                NavigationStack {
+                    ConnectBankView(userId: appState.userId ?? UUID()) {
+                        showConnectBank = false
+                    }
+                    .navigationTitle("Connect Bank")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { showConnectBank = false }
+                        }
+                    }
+                }
+            }
             .sheet(isPresented: $showGoalEditor) {
                 GoalEditorSheet(
                     userId: appState.userId ?? UUID(),
                     isPresented: $showGoalEditor
                 )
             }
+            .fileImporter(
+                isPresented: $showCSVPicker,
+                allowedContentTypes: [.commaSeparatedText, .plainText, .data],
+                allowsMultipleSelection: false
+            ) { result in
+                Task { await handleCSVImport(result) }
+            }
+        }
+    }
+
+    private func handleCSVImport(_ result: Result<[URL], Error>) {
+        guard let userId = appState.userId else { return }
+
+        switch result {
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            guard url.startAccessingSecurityScopedResource() else {
+                importResult = "Could not access file"
+                return
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+
+            isImporting = true
+            importResult = nil
+
+            Task {
+                do {
+                    let data = try Data(contentsOf: url)
+                    let response = try await APIClient.shared.importCSV(
+                        userId: userId,
+                        csvData: data,
+                        filename: url.lastPathComponent
+                    )
+                    importResult = "\(response.transactionsImported) transactions imported"
+                } catch {
+                    importResult = "Import failed: \(error.localizedDescription)"
+                }
+                isImporting = false
+            }
+
+        case .failure(let error):
+            importResult = "Could not select file: \(error.localizedDescription)"
         }
     }
 
     private func syncTransactions() async {
         guard let userId = appState.userId else { return }
-        _ = try? await APIClient.shared.syncTransactions(userId: userId)
+        isSyncing = true
+        syncResult = nil
+
+        do {
+            let result = try await APIClient.shared.syncTransactions(userId: userId)
+            syncResult = "\(result.transactionsSynced) transactions synced"
+        } catch {
+            syncResult = "Sync failed: \(error.localizedDescription)"
+        }
+        isSyncing = false
     }
 }
 

@@ -121,6 +121,28 @@ class APIClient {
         try await get("api/transactions/\(userId)")
     }
 
+    // MARK: - CSV Import
+
+    func importCSV(userId: UUID, csvData: Data, filename: String) async throws -> CSVImportResponse {
+        let boundary = UUID().uuidString
+        var body = Data()
+
+        body.append("--\(boundary)\r\n".data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"file\"; filename=\"\(filename)\"\r\n".data(using: .utf8)!)
+        body.append("Content-Type: text/csv\r\n\r\n".data(using: .utf8)!)
+        body.append(csvData)
+        body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
+
+        var request = URLRequest(url: buildURL("api/transactions/\(userId)/import-csv"))
+        request.httpMethod = "POST"
+        request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+        request.httpBody = body
+
+        let (data, response) = try await session.data(for: request)
+        try validateResponse(response, data: data)
+        return try decode(data)
+    }
+
     // MARK: - Generic HTTP
 
     private func buildURL(_ path: String) -> URL {
