@@ -13,7 +13,7 @@ from app.api.schemas.connections import (
 )
 from app.config import settings
 from app.db.session import get_db
-from app.providers.gocardless import get_banking_provider
+from app.providers.tink import get_banking_provider
 from app.services.bank_connection_service import BankConnectionService
 from app.services.bank_sync import sync_accounts_for_connection
 from app.services.user_service import UserService
@@ -22,7 +22,7 @@ router = APIRouter()
 
 
 def _build_redirect_url(connection_id: uuid.UUID) -> str:
-    """Build the URL GoCardless redirects to after bank auth."""
+    """Build the URL Tink redirects to after bank auth."""
     return f"{settings.base_url}/api/connections/callback?ref={connection_id}"
 
 
@@ -85,7 +85,7 @@ async def create_connection(
     connection.requisition_id = requisition.id
 
     # In sandbox mode the requisition is immediately linked
-    if requisition.status == "LN":
+    if requisition.status == "linked":
         await conn_svc.update_status(connection.id, "linked")
         await sync_accounts_for_connection(
             db, user_id, connection.id, requisition.id
@@ -95,11 +95,10 @@ async def create_connection(
     await db.commit()
     await db.refresh(connection)
 
-    # The authorization_url is the GoCardless-hosted link the user must visit
-    # (this is the `link` field from the requisition, NOT our redirect_url)
+    # The authorization_url is the Tink Link URL the user must visit
     auth_url = None
-    if requisition.status != "LN":
-        auth_url = requisition.redirect_url  # GoCardless auth page
+    if requisition.status != "linked":
+        auth_url = requisition.redirect_url
 
     return ConnectionResponse(
         id=connection.id,
@@ -113,13 +112,13 @@ async def create_connection(
 
 
 @router.get("/callback")
-async def gocardless_callback(
+async def bank_auth_callback(
     ref: uuid.UUID = Query(..., description="Connection ID"),
     db: AsyncSession = Depends(get_db),
 ):
-    """GoCardless redirects here after user completes bank authorization.
+    """Tink redirects here after user completes bank authorization.
 
-    We check the requisition status, sync accounts if linked, then redirect
+    We check the credentials status, sync accounts if linked, then redirect
     the user back to the iOS app via the oak:// deep link scheme.
     """
     conn_svc = BankConnectionService(db)
@@ -135,7 +134,7 @@ async def gocardless_callback(
     provider = get_banking_provider()
     requisition = await provider.get_requisition(connection.requisition_id)
 
-    if requisition.status == "LN":
+    if requisition.status == "linked":
         await conn_svc.update_status(connection.id, "linked")
         await sync_accounts_for_connection(
             db, connection.user_id, connection.id, connection.requisition_id
@@ -147,8 +146,8 @@ async def gocardless_callback(
             status_code=302,
         )
 
-    if requisition.status in ("EX", "RJ"):
-        status = "expired" if requisition.status == "EX" else "revoked"
+    if requisition.status in ("expired", "revoked"):
+        status = requisition.status
         await conn_svc.update_status(connection.id, status)
         await db.commit()
         return RedirectResponse(
@@ -179,7 +178,7 @@ async def poll_connection_status(
         provider = get_banking_provider()
         requisition = await provider.get_requisition(connection.requisition_id)
 
-        if requisition.status == "LN":
+        if requisition.status == "linked":
             await conn_svc.update_status(connection.id, "linked")
             accounts_synced = await sync_accounts_for_connection(
                 db, user_id, connection.id, connection.requisition_id
@@ -191,8 +190,8 @@ async def poll_connection_status(
                 status="linked",
                 accounts_synced=accounts_synced,
             )
-        elif requisition.status in ("EX", "RJ"):
-            status = "expired" if requisition.status == "EX" else "revoked"
+        elif requisition.status in ("expired", "revoked"):
+            status = requisition.status
             await conn_svc.update_status(connection.id, status)
             await db.commit()
             return ConnectionStatusResponse(id=connection.id, status=status)

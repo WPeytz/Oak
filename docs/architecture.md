@@ -33,12 +33,12 @@ Oak/
 ```
 iPhone app  ──HTTP──>  FastAPI  ──SQL──>  PostgreSQL
                           │
-                    GoCardless API
+                    Tink API
 ```
 
 ## Key decisions
 
 - PostgreSQL as the single source of truth
-- GoCardless Bank Account Data API for Open Banking
+- Tink Bank Account Data API for Open Banking
 - Backend owns all scoring logic; iOS is a thin presentation layer
 - Environment config via `.env` files (never committed)

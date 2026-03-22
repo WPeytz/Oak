@@ -1,6 +1,6 @@
-"""Abstract interface for the GoCardless Bank Account Data provider.
+"""Abstract interface for the banking data provider.
 
-All banking provider implementations (live API, sandbox) conform to this
+All provider implementations (Tink live API, sandbox) conform to this
 contract so the rest of the app never touches HTTP or provider-specific details.
 """
 
@@ -32,10 +32,16 @@ class Institution:
 
 @dataclass
 class Requisition:
+    """A user authorization session.
+
+    In Tink terms this maps to a Tink Link session / credentials object.
+    The field names stay provider-agnostic for the rest of the app.
+    """
+
     id: str
-    redirect_url: str
+    redirect_url: str  # The Tink Link URL the user must visit
     institution_id: str
-    status: str  # CR | LN | EX | RJ | SA | GA | UA
+    status: str  # pending | linked | expired | revoked
     accounts: list[str] = field(default_factory=list)
 
 
@@ -71,7 +77,7 @@ class BankingProviderBase(ABC):
 
     @abstractmethod
     async def obtain_token(self) -> TokenPair:
-        """Exchange secret_id / secret_key for an access + refresh token."""
+        """Exchange client credentials for an access token."""
         ...
 
     @abstractmethod
@@ -91,7 +97,7 @@ class BankingProviderBase(ABC):
         """Return a single institution by its provider ID."""
         ...
 
-    # -- Requisitions / sessions -------------------------------------------
+    # -- Authorization sessions ---------------------------------------------
 
     @abstractmethod
     async def create_requisition(
@@ -100,7 +106,7 @@ class BankingProviderBase(ABC):
         institution_id: str,
         reference: str | None = None,
     ) -> Requisition:
-        """Start an end-user authorization session.
+        """Start an end-user authorization session (Tink Link).
 
         Returns a Requisition with a ``redirect_url`` the user must visit to
         authorize access at their bank.
@@ -109,7 +115,7 @@ class BankingProviderBase(ABC):
 
     @abstractmethod
     async def get_requisition(self, requisition_id: str) -> Requisition:
-        """Fetch current status and linked account IDs for a requisition."""
+        """Fetch current status and linked account IDs for a session."""
         ...
 
     # -- Accounts -----------------------------------------------------------

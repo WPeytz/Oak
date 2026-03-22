@@ -109,7 +109,7 @@ class TransactionService(TransactionServiceBase):
             raw_description=raw_description,
             raw_category=raw_category,
             value_date=value_date,
-            source="gocardless",
+            source="tink",
         )
         self.db.add(txn)
         await self.db.flush()
@@ -133,7 +133,7 @@ class TransactionService(TransactionServiceBase):
                 txn = Transaction(
                     user_id=user_id,
                     bank_account_id=bank_account_id,
-                    source=rec.get("source", "gocardless"),
+                    source=rec.get("source", "tink"),
                     **{
                         k: v
                         for k, v in rec.items()

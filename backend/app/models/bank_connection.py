@@ -15,7 +15,7 @@ class BankConnection(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
     )
     provider: Mapped[str] = mapped_column(
-        String(50), nullable=False, default="gocardless"
+        String(50), nullable=False, default="tink"
     )
     institution_id: Mapped[str] = mapped_column(String(100), nullable=False)
     requisition_id: Mapped[str] = mapped_column(

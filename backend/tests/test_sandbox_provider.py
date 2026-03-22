@@ -1,5 +1,5 @@
 import pytest
-from app.providers.gocardless.sandbox import SandboxBankingProvider
+from app.providers.tink.sandbox import SandboxBankingProvider
 
 
 @pytest.fixture
@@ -29,8 +29,8 @@ async def test_list_institutions_empty_country(provider):
 
 @pytest.mark.asyncio
 async def test_get_institution(provider):
-    inst = await provider.get_institution("SANDBOXFINANCE_SFIN0000")
-    assert inst.name == "Sandbox Finance"
+    inst = await provider.get_institution("dk-danskebank-business")
+    assert inst.name == "Danske Bank"
 
 
 @pytest.mark.asyncio
@@ -42,29 +42,29 @@ async def test_get_institution_unknown(provider):
 @pytest.mark.asyncio
 async def test_create_requisition(provider):
     req = await provider.create_requisition(
-        redirect_url="https://example.com/callback",
-        institution_id="SANDBOXFINANCE_SFIN0000",
+        redirect_url="https://api.oakapp.dk/api/connections/callback",
+        institution_id="dk-danskebank-business",
     )
-    assert req.status == "LN"
+    assert req.status == "linked"
     assert len(req.accounts) == 1
 
 
 @pytest.mark.asyncio
 async def test_get_requisition(provider):
     created = await provider.create_requisition(
-        redirect_url="https://example.com/callback",
-        institution_id="SANDBOXFINANCE_SFIN0000",
+        redirect_url="https://api.oakapp.dk/api/connections/callback",
+        institution_id="dk-danskebank-business",
     )
     fetched = await provider.get_requisition(created.id)
     assert fetched.id == created.id
-    assert fetched.status == "LN"
+    assert fetched.status == "linked"
 
 
 @pytest.mark.asyncio
 async def test_get_account_details(provider):
     account = await provider.get_account_details("sandbox-account-001")
     assert account.currency == "DKK"
-    assert account.name == "Sandbox Checking"
+    assert account.name == "Lønkonto"
 
 
 @pytest.mark.asyncio

@@ -8,7 +8,7 @@
 ### BankConnection
 - id
 - user_id
-- provider ("gocardless")
+- provider ("tink")
 - institution_id
 - requisition_id
 - status

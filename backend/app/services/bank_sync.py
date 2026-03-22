@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.providers.gocardless import get_banking_provider
+from app.providers.tink import get_banking_provider
 from app.services.bank_account_service import BankAccountService
 from app.services.bank_connection_service import BankConnectionService
 from app.services.categorization import categorize_transaction, normalize_merchant

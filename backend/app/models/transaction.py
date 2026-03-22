@@ -35,8 +35,8 @@ class Transaction(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     )
     is_essential: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     source: Mapped[str] = mapped_column(
-        String(20), nullable=False, default="gocardless"
-    )  # gocardless | csv
+        String(20), nullable=False, default="tink"
+    )  # tink | csv
 
     # Relationships
     bank_account: Mapped["BankAccount"] = relationship(

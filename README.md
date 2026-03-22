@@ -2,7 +2,7 @@
 
 Oak is an iPhone personal finance app that turns spending insights into concrete actions using a living tree metaphor.
 
-Users connect their bank account via Open Banking (GoCardless). Oak retrieves transactions, identifies discretionary spending, and visualizes financial health as a tree that grows or decays based on behavior.
+Users connect their bank account via Open Banking (Tink). Oak retrieves transactions, identifies discretionary spending, and visualizes financial health as a tree that grows or decays based on behavior.
 
 ## Monorepo structure
 
@@ -54,7 +54,7 @@ docker compose up
 ## MVP features
 
 1. User authentication
-2. Bank connection via GoCardless
+2. Bank connection via Tink
 3. CSV import fallback
 4. Transaction sync and categorization
 5. Essential vs non-essential classification

@@ -23,7 +23,7 @@ class BankConnectionServiceBase(ABC):
         user_id: uuid.UUID,
         institution_id: str,
         requisition_id: str,
-        provider: str = "gocardless",
+        provider: str = "tink",
     ) -> BankConnection: ...
 
     @abstractmethod
@@ -57,7 +57,7 @@ class BankConnectionService(BankConnectionServiceBase):
         user_id: uuid.UUID,
         institution_id: str,
         requisition_id: str,
-        provider: str = "gocardless",
+        provider: str = "tink",
     ) -> BankConnection:
         conn = BankConnection(
             user_id=user_id,

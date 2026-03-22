@@ -1,4 +1,4 @@
-from app.providers.gocardless.base import (
+from app.providers.tink.base import (
     BankingProviderBase,
     Institution,
     ProviderAccount,
@@ -6,7 +6,7 @@ from app.providers.gocardless.base import (
     Requisition,
     TokenPair,
 )
-from app.providers.gocardless.factory import get_banking_provider
+from app.providers.tink.factory import get_banking_provider
 
 __all__ = [
     "BankingProviderBase",

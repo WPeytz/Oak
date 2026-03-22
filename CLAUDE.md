@@ -18,10 +18,11 @@ Oak is a personal finance iOS app with a FastAPI backend. It visualizes financia
   - `app/api/routes/` — route modules by domain
   - `app/models/` — SQLAlchemy ORM models (async, PostgreSQL)
   - `app/services/` — domain services with abstract base + concrete impl
-  - `app/providers/gocardless/` — GoCardless Bank Account Data provider layer
+  - `app/providers/tink/` — Tink Open Banking provider layer
   - `app/db/` — database session, base model, migrations
   - `tests/` — pytest tests
 - `docs/` — shared documentation
+- `web/` — landing page (oakapp.dk, deployed via Vercel)
 
 ## Development commands
 
@@ -45,15 +46,15 @@ docker compose up
 - All scoring logic lives in the backend, not the iOS app
 - Environment variables go in `.env` (never committed); copy from `.env.example`
 - PostgreSQL is the single source of truth
-- GoCardless Bank Account Data API for Open Banking integration
+- Tink API for Open Banking integration
 
-## GoCardless provider layer
+## Tink provider layer
 
-- `app/providers/gocardless/base.py` — abstract `BankingProviderBase` contract
-- `app/providers/gocardless/sandbox.py` — in-memory sandbox (default, no credentials needed)
-- `app/providers/gocardless/client.py` — live API client (requires credentials)
-- `app/providers/gocardless/factory.py` — returns sandbox or live based on `GOCARDLESS_SANDBOX` env var
-- Sandbox is the default (`GOCARDLESS_SANDBOX=true`); set to `false` for production
+- `app/providers/tink/base.py` — abstract `BankingProviderBase` contract
+- `app/providers/tink/sandbox.py` — in-memory sandbox (default, no credentials needed)
+- `app/providers/tink/client.py` — live Tink API client (requires credentials)
+- `app/providers/tink/factory.py` — returns sandbox or live based on `TINK_SANDBOX` env var
+- Sandbox is the default (`TINK_SANDBOX=true`); set to `false` for production
 
 ## Domain entities
 

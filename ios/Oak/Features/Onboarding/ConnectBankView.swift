@@ -169,8 +169,8 @@ struct ConnectBankView: View {
                     onComplete()
                 } else if let urlString = connection.authorizationUrl,
                           let url = URL(string: urlString) {
-                    // Live: open GoCardless bank auth page
-                    // After auth, GoCardless redirects to our backend callback,
+                    // Live: open Tink Link bank auth page
+                    // After auth, Tink redirects to our backend callback,
                     // which then redirects to oak://bank-callback
                     authorizationURL = url
                 } else {

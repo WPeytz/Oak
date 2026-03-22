@@ -1,14 +1,13 @@
 """In-memory sandbox implementation of BankingProviderBase.
 
 Returns deterministic fake data so the app can be developed and tested
-without real GoCardless credentials or network access.
+without real Tink credentials or network access.
 """
 
 import uuid
 from datetime import date, datetime, timedelta, timezone
-from decimal import Decimal
 
-from app.providers.gocardless.base import (
+from app.providers.tink.base import (
     BankingProviderBase,
     Institution,
     ProviderAccount,
@@ -23,23 +22,29 @@ from app.providers.gocardless.base import (
 
 SANDBOX_INSTITUTIONS = [
     Institution(
-        id="SANDBOXFINANCE_SFIN0000",
-        name="Sandbox Finance",
-        logo_url="https://cdn.example.com/sandbox-finance.png",
-        countries=["DK", "GB", "DE", "FR"],
+        id="dk-danskebank-business",
+        name="Danske Bank",
+        logo_url="https://cdn.tink.se/provider-images/dk-danskebank.png",
+        countries=["DK"],
     ),
     Institution(
-        id="SANDBOXBANK_SBKN0001",
-        name="Sandbox Bank",
-        logo_url="https://cdn.example.com/sandbox-bank.png",
-        countries=["DK", "GB"],
+        id="dk-nordea-open-banking",
+        name="Nordea",
+        logo_url="https://cdn.tink.se/provider-images/dk-nordea.png",
+        countries=["DK"],
+    ),
+    Institution(
+        id="dk-jyskebank-open-banking",
+        name="Jyske Bank",
+        logo_url="https://cdn.tink.se/provider-images/dk-jyskebank.png",
+        countries=["DK"],
     ),
 ]
 
 SANDBOX_ACCOUNT = ProviderAccount(
     id="sandbox-account-001",
     iban="DK50 0040 0440 1162 43",
-    name="Sandbox Checking",
+    name="Lønkonto",
     currency="DKK",
 )
 
@@ -136,7 +141,7 @@ class SandboxBankingProvider(BankingProviderBase):
             id=req_id,
             redirect_url=redirect_url,
             institution_id=institution_id,
-            status="LN",  # immediately linked in sandbox
+            status="linked",  # immediately linked in sandbox
             accounts=[SANDBOX_ACCOUNT.id],
         )
         self._requisitions[req_id] = req
@@ -145,12 +150,11 @@ class SandboxBankingProvider(BankingProviderBase):
     async def get_requisition(self, requisition_id: str) -> Requisition:
         if requisition_id in self._requisitions:
             return self._requisitions[requisition_id]
-        # Return a default linked requisition for any ID in sandbox
         return Requisition(
             id=requisition_id,
             redirect_url="",
             institution_id=SANDBOX_INSTITUTIONS[0].id,
-            status="LN",
+            status="linked",
             accounts=[SANDBOX_ACCOUNT.id],
         )
 

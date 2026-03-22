@@ -52,7 +52,7 @@ struct BudgetProgressCard: View {
                             .foregroundStyle(.secondary)
                         Text(formatDKK(remaining))
                             .font(.subheadline.weight(.medium))
-                            .foregroundStyle(remaining > 0 ? .primary : .red)
+                            .foregroundStyle(remaining > 0 ? Color.primary : Color.red)
                     }
 
                     Spacer()
