@@ -142,22 +142,30 @@ struct SettingsView: View {
         switch result {
         case .success(let urls):
             guard let url = urls.first else { return }
-            guard url.startAccessingSecurityScopedResource() else {
-                importResult = "Could not access file"
+
+            // Read file data synchronously while we have security-scoped access
+            let accessed = url.startAccessingSecurityScopedResource()
+            let data: Data
+            let filename = url.lastPathComponent
+            do {
+                data = try Data(contentsOf: url)
+            } catch {
+                if accessed { url.stopAccessingSecurityScopedResource() }
+                importResult = "Import failed: \(error.localizedDescription)"
                 return
             }
-            defer { url.stopAccessingSecurityScopedResource() }
+            if accessed { url.stopAccessingSecurityScopedResource() }
 
+            // Now upload async
             isImporting = true
             importResult = nil
 
             Task {
                 do {
-                    let data = try Data(contentsOf: url)
                     let response = try await APIClient.shared.importCSV(
                         userId: userId,
                         csvData: data,
-                        filename: url.lastPathComponent
+                        filename: filename
                     )
                     importResult = "\(response.transactionsImported) transactions imported"
                 } catch {

@@ -73,7 +73,7 @@ class APIClient {
     }
 
     func loginUser(email: String) async throws -> User {
-        try await post("api/users/login", body: CreateUserRequest(email: email))
+        try await post("api/users/login", body: CreateUserRequest(email: email, name: ""))
     }
 
     func getUser(id: UUID) async throws -> User {

@@ -29,7 +29,7 @@ struct SpendingInsightsCard: View {
             .padding(.top, 4)
         }
         .padding(20)
-        .background(.ultraThinMaterial)
+        .background(.white.opacity(0.8))
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }

@@ -70,7 +70,7 @@ struct MoneyTreeCard: View {
             }
         }
         .padding(24)
-        .background(.ultraThinMaterial)
+        .background(.white.opacity(0.8))
         .clipShape(RoundedRectangle(cornerRadius: 20))
     }
 

@@ -229,7 +229,7 @@ private struct SummaryPill: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(.ultraThinMaterial)
+        .background(.white.opacity(0.8))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }

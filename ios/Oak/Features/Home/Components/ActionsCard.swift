@@ -13,7 +13,7 @@ struct ActionsCard: View {
             }
         }
         .padding(20)
-        .background(.ultraThinMaterial)
+        .background(.white.opacity(0.8))
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
 }
