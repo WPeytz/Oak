@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+.venv/
+
+# iOS
+*.xcuserdata
+DerivedData/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+
+# Docker
+pgdata/
