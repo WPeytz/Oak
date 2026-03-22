@@ -11,6 +11,7 @@ class User(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "users"
 
     email: Mapped[str] = mapped_column(String(320), unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String(200), nullable=False, default="")
 
     # Relationships
     bank_connections: Mapped[list["BankConnection"]] = relationship(

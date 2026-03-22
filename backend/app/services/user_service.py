@@ -29,8 +29,8 @@ class UserService(UserServiceBase):
         result = await self.db.execute(select(User).where(User.email == email))
         return result.scalar_one_or_none()
 
-    async def create(self, email: str) -> User:
-        user = User(email=email)
+    async def create(self, email: str, name: str = "") -> User:
+        user = User(email=email, name=name)
         self.db.add(user)
         await self.db.flush()
         return user

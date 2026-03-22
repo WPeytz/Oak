@@ -19,7 +19,7 @@ async def create_user(
     existing = await svc.get_by_email(body.email)
     if existing:
         raise HTTPException(status_code=409, detail="Email already registered")
-    user = await svc.create(email=body.email)
+    user = await svc.create(email=body.email, name=body.name)
     await db.commit()
     return user
 

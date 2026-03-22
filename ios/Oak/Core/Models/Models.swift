@@ -5,6 +5,7 @@ import Foundation
 struct User: Codable, Identifiable {
     let id: UUID
     let email: String
+    let name: String
     let createdAt: Date
 }
 
@@ -175,6 +176,7 @@ struct UpdateSavingsGoalRequest: Codable {
 
 struct CreateUserRequest: Codable {
     let email: String
+    let name: String
 }
 
 struct UpsertGoalRequest: Codable {

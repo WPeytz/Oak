@@ -7,8 +7,8 @@ struct ConnectBankView: View {
 
     @State private var institutions: [Institution] = []
     @State private var isLoadingInstitutions = true
-    @State private var selectedInstitution: Institution?
     @State private var isConnecting = false
+    @State private var selectedInstitution: Institution?
     @State private var connectionId: UUID?
     @State private var authorizationURL: URL?
     @State private var isPolling = false
@@ -16,27 +16,116 @@ struct ConnectBankView: View {
     @State private var errorMessage: String?
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            VStack(spacing: 8) {
-                Text("Connect your bank")
-                    .font(.title2.bold())
-                Text("Select your bank to securely link\nyour account via Open Banking")
+        VStack(alignment: .leading, spacing: 0) {
+            // Title
+            VStack(alignment: .leading, spacing: 4) {
+                Text("Connect Bank")
+                    .font(.title.bold())
+                    .foregroundStyle(Color(red: 0.15, green: 0.3, blue: 0.18))
+                Text("Read-only | Secured by MitID")
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
+                    .foregroundStyle(Color(red: 0.3, green: 0.5, blue: 0.33))
             }
-            .padding(.top, 24)
-            .padding(.bottom, 16)
+            .padding(.horizontal, 24)
+            .padding(.top, 20)
 
-            if isPolling {
-                pollingView
+            // Security card
+            HStack(spacing: 14) {
+                Image(systemName: "shield.checkered")
+                    .font(.title2)
+                    .foregroundStyle(Color(red: 0.2, green: 0.5, blue: 0.25))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    (Text("Oak ").font(.subheadline) +
+                     Text("never sees").font(.subheadline).bold() +
+                     Text(" your login credentials. Your banks handles all ").font(.subheadline) +
+                     Text("authentication.").font(.subheadline).bold())
+                    .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.22))
+                }
+            }
+            .padding(16)
+            .background(.white.opacity(0.7))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .padding(.horizontal, 24)
+            .padding(.top, 20)
+
+            // Bank list
+            if isConnecting {
+                Spacer()
+                HStack {
+                    Spacer()
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Connecting to \(selectedInstitution?.name ?? "bank")...")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+                Spacer()
+            } else if isPolling {
+                Spacer()
+                HStack {
+                    Spacer()
+                    VStack(spacing: 16) {
+                        ProgressView()
+                            .scaleEffect(1.5)
+                        Text("Waiting for authorization...")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                }
+                Spacer()
             } else if isLoadingInstitutions {
                 Spacer()
-                ProgressView("Loading banks...")
+                HStack { Spacer(); ProgressView(); Spacer() }
                 Spacer()
             } else {
-                institutionList
+                Text("Select your Bank")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(Color(red: 0.3, green: 0.5, blue: 0.33))
+                    .padding(.horizontal, 24)
+                    .padding(.top, 20)
+                    .padding(.bottom, 8)
+
+                ScrollView {
+                    VStack(spacing: 8) {
+                        ForEach(institutions) { inst in
+                            Button {
+                                selectInstitution(inst)
+                            } label: {
+                                HStack(spacing: 14) {
+                                    // Bank icon placeholder
+                                    RoundedRectangle(cornerRadius: 10)
+                                        .fill(Color(red: 0.2, green: 0.35, blue: 0.5).opacity(0.15))
+                                        .frame(width: 44, height: 44)
+                                        .overlay {
+                                            Text(String(inst.name.prefix(2)))
+                                                .font(.caption.bold())
+                                                .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.5))
+                                        }
+
+                                    Text(inst.name)
+                                        .font(.body)
+                                        .foregroundStyle(.primary)
+
+                                    Spacer()
+
+                                    Image(systemName: "chevron.right")
+                                        .font(.caption)
+                                        .foregroundStyle(.tertiary)
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 14)
+                                .background(.white.opacity(0.7))
+                                .clipShape(RoundedRectangle(cornerRadius: 14))
+                            }
+                        }
+                    }
+                    .padding(.horizontal, 24)
+                }
             }
 
             if let errorMessage {
@@ -44,15 +133,19 @@ struct ConnectBankView: View {
                     .font(.caption)
                     .foregroundStyle(.red)
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 8)
+                    .padding(.top, 8)
             }
 
-            // Skip button
-            if !isPolling {
-                Button("Skip for now", action: onComplete)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .padding(.bottom, 32)
+            // Skip
+            if !isConnecting && !isPolling {
+                Button("Skip for now") {
+                    onComplete()
+                }
+                .font(.subheadline)
+                .foregroundStyle(Color(red: 0.3, green: 0.5, blue: 0.33))
+                .frame(maxWidth: .infinity)
+                .padding(.bottom, 32)
+                .padding(.top, 12)
             }
         }
         .task {
@@ -66,88 +159,15 @@ struct ConnectBankView: View {
         }
     }
 
-    // MARK: - Subviews
-
-    private var institutionList: some View {
-        List(institutions) { institution in
-            Button {
-                selectInstitution(institution)
-            } label: {
-                HStack(spacing: 12) {
-                    Image(systemName: "building.columns")
-                        .font(.title3)
-                        .foregroundStyle(.green)
-                        .frame(width: 40, height: 40)
-                        .background(.green.opacity(0.1))
-                        .clipShape(RoundedRectangle(cornerRadius: 8))
-
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(institution.name)
-                            .font(.body)
-                            .foregroundStyle(.primary)
-                        Text(institution.id)
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-
-                    Spacer()
-
-                    if isConnecting && selectedInstitution?.id == institution.id {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "chevron.right")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                    }
-                }
-            }
-            .disabled(isConnecting)
-        }
-        .listStyle(.plain)
-    }
-
-    private var pollingView: some View {
-        VStack(spacing: 24) {
-            Spacer()
-
-            ProgressView()
-                .scaleEffect(1.5)
-
-            VStack(spacing: 8) {
-                Text("Connecting...")
-                    .font(.headline)
-
-                Text(connectionStatusMessage)
-                    .font(.subheadline)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-            }
-
-            Spacer()
-        }
-    }
-
-    private var connectionStatusMessage: String {
-        switch connectionStatus {
-        case "linked":
-            return "Your bank account is connected!"
-        case "expired", "revoked":
-            return "Connection failed. Please try again."
-        default:
-            return "Waiting for bank authorization...\nThis may take a moment."
-        }
-    }
-
     // MARK: - Actions
 
     private func loadInstitutions() async {
         do {
             institutions = try await APIClient.shared.listInstitutions()
-            isLoadingInstitutions = false
         } catch {
-            errorMessage = "Could not load banks: \(error.localizedDescription)"
-            isLoadingInstitutions = false
+            errorMessage = "Could not load banks"
         }
+        isLoadingInstitutions = false
     }
 
     private func selectInstitution(_ institution: Institution) {
@@ -161,20 +181,15 @@ struct ConnectBankView: View {
                     userId: userId,
                     institutionId: institution.id
                 )
-
                 connectionId = connection.id
 
                 if connection.status == "linked" {
-                    // Sandbox: already linked, skip auth
+                    _ = try? await APIClient.shared.syncTransactions(userId: userId)
                     onComplete()
                 } else if let urlString = connection.authorizationUrl,
                           let url = URL(string: urlString) {
-                    // Live: open Tink Link bank auth page
-                    // After auth, Tink redirects to our backend callback,
-                    // which then redirects to oak://bank-callback
                     authorizationURL = url
                 } else {
-                    // No auth URL — start polling
                     startPolling(connectionId: connection.id)
                 }
             } catch {
@@ -187,10 +202,7 @@ struct ConnectBankView: View {
     private func handleBankCallback(_ callbackURL: URL?) {
         guard let callbackURL,
               let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false) else {
-            // User cancelled or no callback — start polling if we have a connection
-            if let connectionId {
-                startPolling(connectionId: connectionId)
-            }
+            if let connectionId { startPolling(connectionId: connectionId) }
             return
         }
 
@@ -199,54 +211,42 @@ struct ConnectBankView: View {
                 .compactMap { item in item.value.map { (item.name, $0) } }
         )
 
-        let status = params["status"]
-        let callbackConnectionId = params["connection_id"].flatMap(UUID.init)
-
-        if status == "success" {
+        if params["status"] == "success" {
             onComplete()
-        } else if status == "expired" || status == "revoked" || status == "error" {
+        } else if params["status"] == "expired" || params["status"] == "revoked" {
             errorMessage = "Bank connection failed. Please try again."
         } else {
-            // pending or unknown — poll
-            startPolling(connectionId: callbackConnectionId ?? connectionId ?? UUID())
+            let id = params["connection_id"].flatMap(UUID.init) ?? connectionId ?? UUID()
+            startPolling(connectionId: id)
         }
     }
 
     private func startPolling(connectionId: UUID) {
         isPolling = true
-
         Task {
             for _ in 0..<30 {
                 do {
                     let status = try await APIClient.shared.pollConnectionStatus(
-                        userId: userId,
-                        connectionId: connectionId
+                        userId: userId, connectionId: connectionId
                     )
                     connectionStatus = status.status
-
                     if status.status == "linked" {
-                        try? await Task.sleep(for: .seconds(1))
+                        _ = try? await APIClient.shared.syncTransactions(userId: userId)
                         onComplete()
                         return
                     } else if status.status == "expired" || status.status == "revoked" {
-                        errorMessage = "Bank connection failed. Please try again."
+                        errorMessage = "Connection failed. Please try again."
                         isPolling = false
                         return
                     }
-                } catch {
-                    // Continue polling on network errors
-                }
-
+                } catch {}
                 try? await Task.sleep(for: .seconds(2))
             }
-
-            errorMessage = "Connection timed out. Please try again."
+            errorMessage = "Connection timed out."
             isPolling = false
         }
     }
 }
-
-// MARK: - URL Identifiable conformance for sheet
 
 extension URL: @retroactive Identifiable {
     public var id: String { absoluteString }
