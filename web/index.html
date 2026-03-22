@@ -1,484 +1,589 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Oak — Watch your finances grow</title>
-    <meta name="description" content="Oak turns your spending into a living tree. Connect your bank, set a budget, and watch your financial health grow.">
-    <meta property="og:title" content="Oak — Watch your finances grow">
-    <meta property="og:description" content="A personal finance app that turns spending insights into a living tree.">
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://oakapp.dk">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌳</text></svg>">
-    <style>
-        :root {
-            --green: #22c55e;
-            --green-dark: #16a34a;
-            --green-light: #bbf7d0;
-            --bg: #fafaf9;
-            --text: #1c1917;
-            --text-secondary: #78716c;
-            --card-bg: #ffffff;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Oak — Grow Your Financial Health</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --bg: #0c0a09;
-                --text: #fafaf9;
-                --text-secondary: #a8a29e;
-                --card-bg: #1c1917;
-                --green-light: #14532d;
-            }
-        }
+  :root {
+    --green-deep: #2d6a3f;
+    --green-mid: #4a9b5f;
+    --green-light: #c8e6c9;
+    --green-pale: #eef7ee;
+    --green-bg: #f3faf3;
+    --bark: #8B5E3C;
+    --text-dark: #1a2e1d;
+    --text-mid: #4a6650;
+    --text-light: #7fa880;
+    --white: #ffffff;
+  }
 
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+  html { scroll-behavior: smooth; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-        }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--green-bg);
+    color: var(--text-dark);
+    overflow-x: hidden;
+  }
 
-        /* Nav */
-        nav {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            max-width: 1080px;
-            margin: 0 auto;
-            padding: 24px 24px;
-        }
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 48px;
+    background: rgba(243,250,243,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(74,155,95,0.12);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Playfair Display', serif;
+    font-size: 22px; font-weight: 700;
+    color: var(--green-deep);
+    text-decoration: none;
+  }
+  .nav-logo-icon {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: var(--green-mid);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .nav-logo-icon svg { width: 22px; height: 22px; }
+  nav ul { list-style: none; display: flex; gap: 36px; }
+  nav ul a { text-decoration: none; color: var(--text-mid); font-size: 14px; font-weight: 500; transition: color .2s; }
+  nav ul a:hover { color: var(--green-deep); }
+  .nav-cta {
+    background: var(--green-deep); color: white;
+    border: none; border-radius: 100px;
+    padding: 10px 22px; font-size: 14px; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: background .2s, transform .15s;
+    text-decoration: none;
+  }
+  .nav-cta:hover { background: var(--green-mid); transform: translateY(-1px); }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 22px;
-            font-weight: 700;
-            text-decoration: none;
-            color: var(--text);
-        }
+  /* ── HERO ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 120px 24px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg {
+    position: absolute; inset: 0; z-index: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(74,155,95,0.18) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 40% at 20% 80%, rgba(200,230,201,0.25) 0%, transparent 60%),
+                radial-gradient(ellipse 40% 30% at 80% 70%, rgba(45,106,63,0.08) 0%, transparent 60%);
+  }
+  /* Floating leaves */
+  .leaf {
+    position: absolute; width: 8px; height: 8px;
+    background: var(--green-mid); border-radius: 0 50% 0 50%;
+    opacity: 0; animation: floatLeaf var(--dur, 6s) var(--delay, 0s) infinite ease-in-out;
+  }
+  @keyframes floatLeaf {
+    0% { opacity: 0; transform: translateY(0) rotate(0deg) scale(0.8); }
+    20% { opacity: 0.5; }
+    80% { opacity: 0.3; }
+    100% { opacity: 0; transform: translateY(-120px) rotate(180deg) translateX(var(--drift, 30px)) scale(1.2); }
+  }
 
-        .logo-icon {
-            font-size: 28px;
-        }
+  .hero-content { position: relative; z-index: 1; text-align: center; max-width: 700px; }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: white; border: 1px solid var(--green-light);
+    border-radius: 100px; padding: 6px 14px;
+    font-size: 13px; color: var(--green-deep); font-weight: 500;
+    margin-bottom: 32px;
+    animation: fadeUp .8s ease both;
+  }
+  .hero-badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green-mid); }
 
-        .nav-links {
-            display: flex;
-            gap: 32px;
-            list-style: none;
-        }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(48px, 8vw, 80px);
+    line-height: 1.1; font-weight: 700;
+    color: var(--text-dark);
+    animation: fadeUp .8s .15s ease both;
+  }
+  .hero h1 em { font-style: italic; color: var(--green-deep); }
 
-        .nav-links a {
-            color: var(--text-secondary);
-            text-decoration: none;
-            font-size: 15px;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
+  .hero-sub {
+    margin-top: 20px;
+    font-size: clamp(16px, 2vw, 19px);
+    color: var(--text-mid); line-height: 1.65; font-weight: 300;
+    animation: fadeUp .8s .3s ease both;
+  }
 
-        .nav-links a:hover {
-            color: var(--text);
-        }
+  .hero-actions {
+    margin-top: 40px;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    animation: fadeUp .8s .45s ease both;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--green-deep); color: white;
+    border-radius: 100px; padding: 14px 28px;
+    font-size: 15px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+    text-decoration: none; border: none; cursor: pointer;
+    transition: all .2s; box-shadow: 0 4px 20px rgba(45,106,63,0.3);
+  }
+  .btn-primary:hover { background: var(--green-mid); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(45,106,63,0.35); }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: white; color: var(--green-deep);
+    border: 1.5px solid var(--green-light);
+    border-radius: 100px; padding: 14px 28px;
+    font-size: 15px; font-weight: 500; font-family: 'DM Sans', sans-serif;
+    text-decoration: none; cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-secondary:hover { border-color: var(--green-mid); transform: translateY(-2px); }
 
-        /* Hero */
-        .hero {
-            max-width: 1080px;
-            margin: 0 auto;
-            padding: 80px 24px 60px;
-            text-align: center;
-        }
+  /* ── PHONE MOCKUPS ── */
+  .hero-phones {
+    position: relative; z-index: 1;
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: -20px; margin-top: 64px;
+    animation: fadeUp .8s .6s ease both;
+  }
+  .phone-wrap {
+    position: relative;
+    transition: transform .3s;
+  }
+  .phone-wrap:hover { transform: translateY(-8px); }
+  .phone-wrap.center { z-index: 2; }
+  .phone-wrap.left { transform: rotate(-6deg) translateX(30px); z-index: 1; }
+  .phone-wrap.left:hover { transform: rotate(-6deg) translateX(30px) translateY(-8px); }
+  .phone-wrap.right { transform: rotate(6deg) translateX(-30px); z-index: 1; }
+  .phone-wrap.right:hover { transform: rotate(6deg) translateX(-30px) translateY(-8px); }
 
-        .hero h1 {
-            font-size: clamp(40px, 6vw, 64px);
-            font-weight: 800;
-            line-height: 1.1;
-            letter-spacing: -0.03em;
-            margin-bottom: 24px;
-        }
+  .phone-frame {
+    width: 220px; border-radius: 36px;
+    box-shadow: 0 30px 80px rgba(0,0,0,0.18), 0 0 0 1px rgba(0,0,0,0.06);
+    overflow: hidden; display: block;
+  }
+  .phone-frame img { width: 100%; display: block; }
 
-        .hero h1 .highlight {
-            color: var(--green);
-        }
+  /* ── SECTION SHARED ── */
+  section { padding: 100px 24px; }
+  .container { max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    display: inline-block;
+    font-size: 12px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase;
+    color: var(--green-mid); margin-bottom: 16px;
+  }
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(32px, 5vw, 52px);
+    line-height: 1.15; color: var(--text-dark);
+  }
+  .section-title em { font-style: italic; color: var(--green-deep); }
 
-        .hero p {
-            font-size: 20px;
-            color: var(--text-secondary);
-            max-width: 540px;
-            margin: 0 auto 40px;
-            line-height: 1.6;
-        }
+  /* ── FEATURES ── */
+  .features { background: white; }
+  .features-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px;
+    margin-top: 60px;
+    border-radius: 24px; overflow: hidden;
+    box-shadow: 0 2px 40px rgba(45,106,63,0.08);
+  }
+  .feature-card {
+    background: var(--green-bg); padding: 40px 36px;
+    transition: background .25s;
+  }
+  .feature-card:hover { background: #e8f5e9; }
+  .feature-icon {
+    width: 48px; height: 48px; border-radius: 14px;
+    background: var(--green-light);
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 20px; font-size: 22px;
+  }
+  .feature-card h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; margin-bottom: 10px; color: var(--text-dark);
+  }
+  .feature-card p { font-size: 14px; line-height: 1.7; color: var(--text-mid); font-weight: 300; }
 
-        .hero-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: var(--green);
-            color: #fff;
-            padding: 16px 32px;
-            border-radius: 14px;
-            font-size: 17px;
-            font-weight: 600;
-            text-decoration: none;
-            transition: background 0.2s, transform 0.15s;
-        }
+  /* ── TREE SECTION ── */
+  .tree-section {
+    background: linear-gradient(160deg, var(--green-deep) 0%, #1a4d2a 100%);
+    color: white; overflow: hidden; position: relative;
+  }
+  .tree-section::before {
+    content: ''; position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 80% at 80% 50%, rgba(74,155,95,0.25), transparent);
+  }
+  .tree-layout {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 80px; align-items: center;
+    position: relative; z-index: 1;
+  }
+  .tree-text .section-label { color: rgba(200,230,201,0.8); }
+  .tree-text .section-title { color: white; }
+  .tree-text p { color: rgba(255,255,255,0.75); line-height: 1.75; margin-top: 20px; font-weight: 300; font-size: 16px; }
 
-        .hero-cta:hover {
-            background: var(--green-dark);
-            transform: translateY(-1px);
-        }
+  .tree-stages {
+    display: flex; flex-direction: column; gap: 16px; margin-top: 36px;
+  }
+  .stage {
+    display: flex; align-items: center; gap: 16px;
+    background: rgba(255,255,255,0.08); border-radius: 16px; padding: 16px 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: background .2s;
+  }
+  .stage:hover { background: rgba(255,255,255,0.14); }
+  .stage-bar {
+    flex: 1; height: 5px; background: rgba(255,255,255,0.15);
+    border-radius: 10px; overflow: hidden;
+  }
+  .stage-fill { height: 100%; border-radius: 10px; background: var(--green-light); }
+  .stage-label { font-size: 13px; color: rgba(255,255,255,0.7); min-width: 80px; }
+  .stage-pct { font-size: 13px; color: white; font-weight: 500; min-width: 36px; text-align: right; }
 
-        .hero-sub {
-            margin-top: 16px;
-            font-size: 14px;
-            color: var(--text-secondary);
-        }
+  .tree-visual {
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tree-phone-big {
+    width: 260px; border-radius: 44px;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08);
+    overflow: hidden;
+  }
+  .tree-phone-big img { width: 100%; display: block; }
 
-        /* Tree visual */
-        .tree-section {
-            text-align: center;
-            padding: 40px 24px 80px;
-        }
+  /* ── GOALS ── */
+  .goals-layout {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center;
+  }
+  .goals-phone {
+    width: 260px; border-radius: 44px; margin: 0 auto; display: block;
+    box-shadow: 0 20px 60px rgba(45,106,63,0.2), 0 0 0 1px rgba(0,0,0,0.05);
+    overflow: hidden;
+  }
+  .goals-phone img { width: 100%; display: block; }
+  .goals-list { display: flex; flex-direction: column; gap: 14px; margin-top: 36px; }
+  .goal-item {
+    background: white; border-radius: 16px; padding: 18px 22px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    display: flex; align-items: center; gap: 16px;
+    transition: transform .2s, box-shadow .2s;
+  }
+  .goal-item:hover { transform: translateX(6px); box-shadow: 0 4px 20px rgba(45,106,63,0.12); }
+  .goal-emoji { font-size: 22px; }
+  .goal-info { flex: 1; }
+  .goal-info strong { font-size: 14px; font-weight: 500; display: block; margin-bottom: 5px; }
+  .goal-progress-bar { height: 4px; background: var(--green-light); border-radius: 10px; overflow: hidden; }
+  .goal-progress-fill { height: 100%; background: var(--green-deep); border-radius: 10px; }
+  .goal-pct { font-size: 13px; font-weight: 500; color: var(--green-deep); }
 
-        .tree-visual {
-            position: relative;
-            display: inline-block;
-            margin: 0 auto;
-        }
+  /* ── CTA ── */
+  .cta-section {
+    text-align: center;
+    background: var(--green-pale);
+  }
+  .cta-section .section-title { margin: 0 auto; max-width: 560px; }
+  .cta-section p { color: var(--text-mid); margin-top: 16px; font-size: 17px; font-weight: 300; }
+  .cta-btns { margin-top: 40px; display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
 
-        .tree-svg {
-            width: 280px;
-            height: 320px;
-        }
+  .app-store-btn {
+    display: inline-flex; align-items: center; gap: 12px;
+    background: var(--text-dark); color: white;
+    border-radius: 16px; padding: 12px 24px;
+    text-decoration: none; transition: all .2s;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .app-store-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+  .app-store-btn svg { width: 28px; height: 28px; fill: white; }
+  .app-store-text { text-align: left; }
+  .app-store-text span { display: block; font-size: 10px; opacity: .7; letter-spacing: .05em; text-transform: uppercase; }
+  .app-store-text strong { font-size: 16px; font-weight: 500; }
 
-        /* Features */
-        .features {
-            max-width: 1080px;
-            margin: 0 auto;
-            padding: 80px 24px;
-        }
+  /* ── FOOTER ── */
+  footer {
+    background: var(--text-dark); color: rgba(255,255,255,0.5);
+    padding: 40px 48px; display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px; color: white; font-weight: 700;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .footer-logo-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--green-mid);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .footer-logo-icon svg { width: 18px; height: 18px; }
+  footer p { font-size: 13px; }
 
-        .features-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .reveal {
+    opacity: 0; transform: translateY(30px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .reveal.visible { opacity: 1; transform: none; }
 
-        .features-header h2 {
-            font-size: 36px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 12px;
-        }
-
-        .features-header p {
-            font-size: 18px;
-            color: var(--text-secondary);
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-        }
-
-        .feature-card {
-            background: var(--card-bg);
-            border: 1px solid rgba(120, 113, 108, 0.12);
-            border-radius: 16px;
-            padding: 32px;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
-        }
-
-        .feature-icon {
-            width: 48px;
-            height: 48px;
-            background: var(--green-light);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-
-        .feature-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .feature-card p {
-            font-size: 15px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-
-        /* How it works */
-        .how-it-works {
-            max-width: 1080px;
-            margin: 0 auto;
-            padding: 80px 24px;
-        }
-
-        .how-it-works h2 {
-            text-align: center;
-            font-size: 36px;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 60px;
-        }
-
-        .steps {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 40px;
-            text-align: center;
-        }
-
-        .step-number {
-            width: 40px;
-            height: 40px;
-            background: var(--green);
-            color: #fff;
-            border-radius: 50%;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
-
-        .step h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .step p {
-            font-size: 15px;
-            color: var(--text-secondary);
-        }
-
-        /* CTA section */
-        .cta-section {
-            text-align: center;
-            padding: 80px 24px;
-            margin: 40px 24px;
-            max-width: 1080px;
-            margin-left: auto;
-            margin-right: auto;
-            background: var(--card-bg);
-            border: 1px solid rgba(120, 113, 108, 0.12);
-            border-radius: 24px;
-        }
-
-        .cta-section h2 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 12px;
-        }
-
-        .cta-section p {
-            font-size: 18px;
-            color: var(--text-secondary);
-            margin-bottom: 32px;
-        }
-
-        /* Footer */
-        footer {
-            max-width: 1080px;
-            margin: 0 auto;
-            padding: 40px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            color: var(--text-secondary);
-            font-size: 14px;
-        }
-
-        footer a {
-            color: var(--text-secondary);
-            text-decoration: none;
-        }
-
-        footer a:hover {
-            color: var(--text);
-        }
-
-        .footer-links {
-            display: flex;
-            gap: 24px;
-        }
-
-        /* Mobile */
-        @media (max-width: 640px) {
-            .nav-links {
-                display: none;
-            }
-
-            .hero {
-                padding: 48px 20px 40px;
-            }
-
-            .hero p {
-                font-size: 17px;
-            }
-
-            .features, .how-it-works {
-                padding: 48px 20px;
-            }
-
-            footer {
-                flex-direction: column;
-                gap: 16px;
-                text-align: center;
-            }
-        }
-    </style>
+  /* ── RESPONSIVE ── */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    nav ul { display: none; }
+    .features-grid { grid-template-columns: 1fr; }
+    .tree-layout, .goals-layout { grid-template-columns: 1fr; gap: 40px; }
+    .tree-visual { order: -1; }
+    .hero-phones .phone-wrap.left,
+    .hero-phones .phone-wrap.right { display: none; }
+    footer { flex-direction: column; gap: 12px; text-align: center; }
+  }
+</style>
 </head>
 <body>
 
+<!-- NAV -->
 <nav>
-    <a href="/" class="logo">
-        <span class="logo-icon">🌳</span>
-        <span>Oak</span>
-    </a>
-    <ul class="nav-links">
-        <li><a href="#features">Features</a></li>
-        <li><a href="#how-it-works">How it works</a></li>
-    </ul>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3C8.5 3 6 6 6 9c0 2.5 1.5 4.5 3.5 5.5V20h5v-5.5C16.5 13.5 18 11.5 18 9c0-3-2.5-6-6-6z" fill="white"/>
+        <rect x="10.5" y="14" width="3" height="7" fill="white" opacity="0.6"/>
+      </svg>
+    </div>
+    Oak
+  </a>
+  <ul>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#tree">Your Tree</a></li>
+    <li><a href="#goals">Goals</a></li>
+  </ul>
+  <a href="#cta" class="nav-cta">Download Free</a>
 </nav>
 
+<!-- HERO -->
 <section class="hero">
-    <h1>Watch your finances <span class="highlight">grow</span></h1>
-    <p>Oak turns your bank transactions into a living tree. Spend wisely and it thrives. Overspend, and the leaves fall.</p>
-    <a href="#notify" class="hero-cta">
-        <span>Coming soon to iPhone</span>
-    </a>
-    <p class="hero-sub">Connect via Open Banking. No manual input needed.</p>
-</section>
+  <div class="hero-bg"></div>
 
-<section class="tree-section">
-    <div class="tree-visual">
-        <svg class="tree-svg" viewBox="0 0 280 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <!-- Trunk -->
-            <rect x="126" y="200" width="28" height="80" rx="6" fill="#92400e"/>
-            <rect x="130" y="200" width="20" height="80" rx="4" fill="#a16207" opacity="0.4"/>
+  <!-- Floating leaves -->
+  <div class="leaf" style="left:15%;top:60%;--dur:7s;--delay:0s;--drift:40px;width:10px;height:10px;"></div>
+  <div class="leaf" style="left:75%;top:70%;--dur:5.5s;--delay:1.2s;--drift:-35px;background:#4a9b5f;"></div>
+  <div class="leaf" style="left:40%;top:80%;--dur:8s;--delay:2.5s;--drift:20px;width:6px;height:6px;background:#2d6a3f;"></div>
+  <div class="leaf" style="left:85%;top:50%;--dur:6.5s;--delay:0.8s;--drift:-50px;width:9px;height:9px;"></div>
+  <div class="leaf" style="left:25%;top:40%;--dur:7.5s;--delay:3s;--drift:30px;background:#c8e6c9;width:7px;height:7px;"></div>
 
-            <!-- Canopy layers -->
-            <ellipse cx="140" cy="160" rx="80" ry="70" fill="#22c55e" opacity="0.9"/>
-            <ellipse cx="110" cy="140" rx="60" ry="55" fill="#16a34a" opacity="0.8"/>
-            <ellipse cx="175" cy="130" rx="55" ry="50" fill="#15803d" opacity="0.7"/>
-            <ellipse cx="140" cy="110" rx="50" ry="45" fill="#22c55e" opacity="0.6"/>
-
-            <!-- Highlight -->
-            <ellipse cx="125" cy="120" rx="25" ry="20" fill="#4ade80" opacity="0.4"/>
-
-            <!-- Ground shadow -->
-            <ellipse cx="140" cy="288" rx="60" ry="8" fill="#78716c" opacity="0.1"/>
-        </svg>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <div class="hero-badge-dot"></div>
+      Personal Finance · Denmark
     </div>
+    <h1>Your money,<br><em>growing</em> like an oak</h1>
+    <p class="hero-sub">Connect your Danske Bank account and watch your financial health bloom. Track spending, set goals, and nurture your savings — one transaction at a time.</p>
+    <div class="hero-actions">
+      <a href="#cta" class="btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+        App Store
+      </a>
+      <a href="#features" class="btn-secondary">See how it works ↓</a>
+    </div>
+  </div>
+
+  <div class="hero-phones">
+    <div class="phone-wrap left">
+      <img class="phone-frame" src="/mnt/user-data/uploads/Goals_list.png" alt="Goals">
+    </div>
+    <div class="phone-wrap center">
+      <img class="phone-frame" src="/mnt/user-data/uploads/Home_dashboard_2_-_living.png" alt="Home">
+    </div>
+    <div class="phone-wrap right">
+      <img class="phone-frame" src="/mnt/user-data/uploads/History.png" alt="History">
+    </div>
+  </div>
 </section>
 
+<!-- FEATURES -->
 <section class="features" id="features">
-    <div class="features-header">
-        <h2>Finance that feels alive</h2>
-        <p>Not another dashboard full of numbers you'll ignore.</p>
+  <div class="container">
+    <div class="reveal">
+      <span class="section-label">Why Oak</span>
+      <h2 class="section-title">Finance that feels <em>alive</em></h2>
     </div>
-
-    <div class="features-grid">
-        <div class="feature-card">
-            <div class="feature-icon">🌱</div>
-            <h3>Living Money Tree</h3>
-            <p>Your tree reflects your financial health at a glance. It grows when you're on track and sheds leaves when you overspend.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">🏦</div>
-            <h3>Open Banking</h3>
-            <p>Securely connect your Danish bank account. Transactions sync automatically — no manual logging required.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">📊</div>
-            <h3>Smart categorization</h3>
-            <p>Oak automatically sorts your spending into categories and identifies what's essential vs. discretionary.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">🎯</div>
-            <h3>Budget tracking</h3>
-            <p>Set a discretionary budget and savings target. See exactly how much you can spend per day to stay on track.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">💡</div>
-            <h3>Actionable insights</h3>
-            <p>Get concrete recommendations based on your actual spending patterns — not generic financial advice.</p>
-        </div>
-
-        <div class="feature-card">
-            <div class="feature-icon">🔒</div>
-            <h3>Privacy first</h3>
-            <p>Your data stays yours. Oak uses read-only bank access and never shares your financial information.</p>
-        </div>
+    <div class="features-grid reveal">
+      <div class="feature-card">
+        <div class="feature-icon">🏦</div>
+        <h3>Live Bank Data</h3>
+        <p>Connects directly to your Danske Bank account via secure open banking. Your transactions appear automatically — no manual entry.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🌱</div>
+        <h3>Your Financial Tree</h3>
+        <p>A pixel-art oak grows or withers based on your real financial health score. Overspend and it goes bare. Save well and it flourishes.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>Savings Goals</h3>
+        <p>Set targets for anything — a down payment, new laptop, or a wedding ring. Watch progress bars fill as your savings grow.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📅</div>
+        <h3>Transaction History</h3>
+        <p>A clean, date-grouped view of every purchase. Netto, DSB, KAB — all in one place, always up to date.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💚</div>
+        <h3>Financial Health Score</h3>
+        <p>A single percentage that captures how well you're managing your money this month. Simple, honest, motivating.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔒</div>
+        <h3>Secure by Design</h3>
+        <p>OAuth + MitID authentication. Read-only access. Your bank credentials never touch Oak's servers.</p>
+      </div>
     </div>
+  </div>
 </section>
 
-<section class="how-it-works" id="how-it-works">
-    <h2>How it works</h2>
-
-    <div class="steps">
-        <div class="step">
-            <div class="step-number">1</div>
-            <h3>Connect your bank</h3>
-            <p>Link your account securely through Open Banking in under a minute.</p>
+<!-- TREE -->
+<section class="tree-section" id="tree">
+  <div class="container">
+    <div class="tree-layout">
+      <div class="tree-text reveal">
+        <span class="section-label">The Oak Tree</span>
+        <h2 class="section-title">Watch it <em>grow</em></h2>
+        <p>Your financial health is more than a number — it's a living thing. Oak visualises your money story as a pixel tree that responds to how you spend and save. A sapling when you're just starting. A mighty oak when you're thriving.</p>
+        <div class="tree-stages">
+          <div class="stage">
+            <span class="stage-label">Sapling</span>
+            <div class="stage-bar"><div class="stage-fill" style="width:15%"></div></div>
+            <span class="stage-pct">0–25%</span>
+          </div>
+          <div class="stage">
+            <span class="stage-label">Growing</span>
+            <div class="stage-bar"><div class="stage-fill" style="width:45%"></div></div>
+            <span class="stage-pct">25–50%</span>
+          </div>
+          <div class="stage">
+            <span class="stage-label">Healthy</span>
+            <div class="stage-bar"><div class="stage-fill" style="width:72%"></div></div>
+            <span class="stage-pct">50–75%</span>
+          </div>
+          <div class="stage">
+            <span class="stage-label">Thriving</span>
+            <div class="stage-bar"><div class="stage-fill" style="width:100%"></div></div>
+            <span class="stage-pct">75–100%</span>
+          </div>
         </div>
-
-        <div class="step">
-            <div class="step-number">2</div>
-            <h3>Set your goals</h3>
-            <p>Choose a monthly discretionary budget and savings target that work for you.</p>
+      </div>
+      <div class="tree-visual reveal">
+        <div class="tree-phone-big">
+          <img src="/mnt/user-data/uploads/Home_dashboard_2_-_living.png" alt="Living tree">
         </div>
-
-        <div class="step">
-            <div class="step-number">3</div>
-            <h3>Watch your tree</h3>
-            <p>Your Money Tree updates daily. Stay within budget and watch it thrive.</p>
-        </div>
-
-        <div class="step">
-            <div class="step-number">4</div>
-            <h3>Take action</h3>
-            <p>Get personalized recommendations to improve your spending habits.</p>
-        </div>
+      </div>
     </div>
+  </div>
 </section>
 
-<section class="cta-section" id="notify">
-    <h2>Coming soon</h2>
-    <p>Oak is currently in development. We're launching for iPhone in Denmark first.</p>
-    <a href="mailto:hello@oakapp.dk" class="hero-cta">Get in touch</a>
+<!-- GOALS -->
+<section id="goals">
+  <div class="container">
+    <div class="goals-layout">
+      <div class="reveal">
+        <div class="goals-phone">
+          <img src="/mnt/user-data/uploads/Goals_list.png" alt="Goals list">
+        </div>
+      </div>
+      <div class="reveal">
+        <span class="section-label">Goals</span>
+        <h2 class="section-title">Save for things that <em>matter</em></h2>
+        <p style="color:var(--text-mid);margin-top:16px;line-height:1.75;font-weight:300;">Name your goal, set a target amount, and Oak tracks your progress automatically. Big dreams start with small steps.</p>
+        <div class="goals-list">
+          <div class="goal-item">
+            <span class="goal-emoji">🏠</span>
+            <div class="goal-info">
+              <strong>Down-payment</strong>
+              <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:11%"></div></div>
+            </div>
+            <span class="goal-pct">11%</span>
+          </div>
+          <div class="goal-item">
+            <span class="goal-emoji">💻</span>
+            <div class="goal-info">
+              <strong>MacBook Air M5</strong>
+              <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:49%"></div></div>
+            </div>
+            <span class="goal-pct">49%</span>
+          </div>
+          <div class="goal-item">
+            <span class="goal-emoji">💍</span>
+            <div class="goal-info">
+              <strong>Wedding Ring</strong>
+              <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:64%"></div></div>
+            </div>
+            <span class="goal-pct">64%</span>
+          </div>
+          <div class="goal-item">
+            <span class="goal-emoji">📱</span>
+            <div class="goal-info">
+              <strong>iPhone 18 Pro</strong>
+              <div class="goal-progress-bar"><div class="goal-progress-fill" style="width:89%"></div></div>
+            </div>
+            <span class="goal-pct">89%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
+<!-- CTA -->
+<section class="cta-section" id="cta">
+  <div class="container" style="text-align:center">
+    <div class="reveal">
+      <span class="section-label">Get Started</span>
+      <h2 class="section-title">Plant your <em>oak</em> today</h2>
+      <p>Free to download. Connect your bank in under two minutes.</p>
+      <div class="cta-btns">
+        <a href="#" class="app-store-btn">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <div class="app-store-text">
+            <span>Download on the</span>
+            <strong>App Store</strong>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
 <footer>
-    <span>&copy; 2026 Oak. Made in Denmark.</span>
-    <div class="footer-links">
-        <a href="mailto:hello@oakapp.dk">Contact</a>
+  <div class="footer-logo">
+    <div class="footer-logo-icon">
+      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 3C8.5 3 6 6 6 9c0 2.5 1.5 4.5 3.5 5.5V20h5v-5.5C16.5 13.5 18 11.5 18 9c0-3-2.5-6-6-6z" fill="white"/>
+      </svg>
     </div>
+    Oak
+  </div>
+  <p>© 2026 Oak. Built at DTU Copenhagen.</p>
 </footer>
 
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+      }
+    });
+  }, { threshold: 0.1 });
+  reveals.forEach(el => obs.observe(el));
+</script>
 </body>
 </html>
