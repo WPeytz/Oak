@@ -91,7 +91,8 @@ class TransactionService(TransactionServiceBase):
     ) -> Transaction:
         result = await self.db.execute(
             select(Transaction).where(
-                Transaction.provider_transaction_id == provider_transaction_id
+                Transaction.user_id == user_id,
+                Transaction.provider_transaction_id == provider_transaction_id,
             )
         )
         existing = result.scalar_one_or_none()
@@ -125,8 +126,9 @@ class TransactionService(TransactionServiceBase):
         for rec in records:
             result = await self.db.execute(
                 select(Transaction).where(
+                    Transaction.user_id == user_id,
                     Transaction.provider_transaction_id
-                    == rec["provider_transaction_id"]
+                    == rec["provider_transaction_id"],
                 )
             )
             if result.scalar_one_or_none() is None:

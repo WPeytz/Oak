@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import ForeignKey, String
+from sqlalchemy import ForeignKey, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -9,6 +9,9 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 class BankAccount(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "bank_accounts"
+    __table_args__ = (
+        UniqueConstraint("user_id", "provider_account_id", name="uq_bank_account_user_provider"),
+    )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
@@ -17,7 +20,7 @@ class BankAccount(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=True), ForeignKey("bank_connections.id"), nullable=False
     )
     provider_account_id: Mapped[str] = mapped_column(
-        String(200), unique=True, nullable=False
+        String(200), nullable=False
     )
     name: Mapped[str] = mapped_column(String(200), nullable=False)
     iban_masked: Mapped[str | None] = mapped_column(String(50), nullable=True)

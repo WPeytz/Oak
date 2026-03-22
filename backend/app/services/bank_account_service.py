@@ -63,7 +63,8 @@ class BankAccountService(BankAccountServiceBase):
     ) -> BankAccount:
         result = await self.db.execute(
             select(BankAccount).where(
-                BankAccount.provider_account_id == provider_account_id
+                BankAccount.user_id == user_id,
+                BankAccount.provider_account_id == provider_account_id,
             )
         )
         existing = result.scalar_one_or_none()
@@ -71,6 +72,7 @@ class BankAccountService(BankAccountServiceBase):
             existing.name = name
             existing.iban_masked = iban_masked
             existing.currency = currency
+            existing.connection_id = connection_id
             await self.db.flush()
             return existing
 

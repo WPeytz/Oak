@@ -12,8 +12,9 @@ import app.models  # noqa: F401
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Create tables on startup (safe if they already exist)
+    # Recreate tables on startup (drop + create for early development)
     async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
         await conn.run_sync(Base.metadata.create_all)
     yield
 

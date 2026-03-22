@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String
+from sqlalchemy import Boolean, Date, ForeignKey, Numeric, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -11,6 +11,9 @@ from app.db.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 
 class Transaction(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     __tablename__ = "transactions"
+    __table_args__ = (
+        UniqueConstraint("user_id", "provider_transaction_id", name="uq_transaction_user_provider"),
+    )
 
     user_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("users.id"), nullable=False
@@ -19,7 +22,7 @@ class Transaction(Base, UUIDPrimaryKeyMixin, TimestampMixin):
         UUID(as_uuid=True), ForeignKey("bank_accounts.id"), nullable=False
     )
     provider_transaction_id: Mapped[str | None] = mapped_column(
-        String(200), unique=True, nullable=True
+        String(200), nullable=True
     )
 
     booked_at: Mapped[date] = mapped_column(Date, nullable=False)
