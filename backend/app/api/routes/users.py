@@ -24,6 +24,18 @@ async def create_user(
     return user
 
 
+@router.post("/login", response_model=UserResponse)
+async def login_user(
+    body: CreateUserRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    svc = UserService(db)
+    user = await svc.get_by_email(body.email)
+    if not user:
+        raise HTTPException(status_code=404, detail="No account found with that email")
+    return user
+
+
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(
     user_id: uuid.UUID,

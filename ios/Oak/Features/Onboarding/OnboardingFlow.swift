@@ -12,7 +12,6 @@ struct OnboardingFlow: View {
     @EnvironmentObject var appState: AppState
     @State private var step: OnboardingStep = .welcome
     @State private var createdUser: User?
-    @State private var goalSet = false
 
     var body: some View {
         NavigationStack {
@@ -22,15 +21,19 @@ struct OnboardingFlow: View {
                     WelcomeView(onContinue: { step = .createAccount })
 
                 case .createAccount:
-                    CreateAccountView { user in
+                    CreateAccountView { user, isExisting in
                         createdUser = user
                         appState.setUser(user)
-                        step = .setGoals
+                        if isExisting {
+                            // Returning user — go straight to main app
+                            appState.hasCompletedOnboarding = true
+                        } else {
+                            step = .setGoals
+                        }
                     }
 
                 case .setGoals:
                     SetGoalsView(userId: createdUser!.id) {
-                        goalSet = true
                         step = .connectBank
                     }
 

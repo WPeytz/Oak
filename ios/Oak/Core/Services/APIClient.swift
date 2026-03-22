@@ -27,7 +27,7 @@ class APIClient {
     private let encoder: JSONEncoder
 
     private init() {
-        self.baseURL = URL(string: "http://localhost:8000")!
+        self.baseURL = URL(string: "https://api.oakapp.dk")!
 
         let config = URLSessionConfiguration.default
         config.timeoutIntervalForRequest = 30
@@ -53,7 +53,11 @@ class APIClient {
     // MARK: - Users
 
     func createUser(email: String) async throws -> User {
-        try await post("api/users", body: CreateUserRequest(email: email))
+        try await post("api/users/", body: CreateUserRequest(email: email))
+    }
+
+    func loginUser(email: String) async throws -> User {
+        try await post("api/users/login", body: CreateUserRequest(email: email))
     }
 
     func getUser(id: UUID) async throws -> User {
@@ -119,9 +123,16 @@ class APIClient {
 
     // MARK: - Generic HTTP
 
+    private func buildURL(_ path: String) -> URL {
+        // Use string concatenation to avoid appendingPathComponent
+        // which escapes query strings and strips trailing slashes
+        let base = baseURL.absoluteString.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+        let cleanPath = path.hasPrefix("/") ? path : "/\(path)"
+        return URL(string: base + cleanPath)!
+    }
+
     private func get<T: Decodable>(_ path: String) async throws -> T {
-        let url = baseURL.appendingPathComponent(path)
-        let (data, response) = try await session.data(from: url)
+        let (data, response) = try await session.data(from: buildURL(path))
         try validateResponse(response, data: data)
         return try decode(data)
     }
@@ -130,7 +141,7 @@ class APIClient {
         _ path: String,
         body: B
     ) async throws -> T {
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        var request = URLRequest(url: buildURL(path))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try encoder.encode(body)
@@ -144,7 +155,7 @@ class APIClient {
         _ path: String,
         body: B
     ) async throws -> T {
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+        var request = URLRequest(url: buildURL(path))
         request.httpMethod = "PUT"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try encoder.encode(body)
