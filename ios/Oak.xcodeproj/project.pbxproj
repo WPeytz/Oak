@@ -35,7 +35,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		03D90651E33152E3C952CE1D /* Oak.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Oak.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		03D90651E33152E3C952CE1D /* Oak.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Oak.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		08E0A4A56EADCDB21276DE81 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		0A4BDA53A0AA9EDD84FE9D01 /* CreateAccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CreateAccountView.swift; sourceTree = "<group>"; };
 		0E40A5BF32FFABF9CC42E8B9 /* WelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeView.swift; sourceTree = "<group>"; };
@@ -263,11 +263,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1600;
-				TargetAttributes = {
-					FC7E40F4DC44200CB4F10CC2 = {
-						DevelopmentTeam = "";
-					};
-				};
 			};
 			buildConfigurationList = 532456882F461C1352BFE531 /* Build configuration list for PBXProject "Oak" */;
 			developmentRegion = en;
@@ -465,6 +460,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 6MRTNKSAGU;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Oak/Info.plist;
 				INFOPLIST_GENERATION_MODE = GeneratedFile;
@@ -490,6 +486,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				DEVELOPMENT_TEAM = 6MRTNKSAGU;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Oak/Info.plist;
 				INFOPLIST_GENERATION_MODE = GeneratedFile;
