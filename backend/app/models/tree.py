@@ -41,5 +41,8 @@ class SpendingGoal(Base, UUIDPrimaryKeyMixin, TimestampMixin):
     monthly_savings_target: Mapped[float] = mapped_column(
         Float, nullable=False, default=0.0
     )
+    monthly_net_goal: Mapped[float] = mapped_column(
+        Float, nullable=False, default=0.0
+    )
 
     user: Mapped["User"] = relationship("User", back_populates="spending_goal")

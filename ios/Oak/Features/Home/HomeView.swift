@@ -38,6 +38,8 @@ struct HomeView: View {
     @State private var isSyncing = false
     @State private var errorMessage: String?
     @State private var showSettings = false
+    @State private var selectedDate: Date = Date()
+    @State private var selectedHealthScore: Int?
 
     var body: some View {
         ZStack {
@@ -71,21 +73,27 @@ struct HomeView: View {
                         .padding(.horizontal, 24)
                         .padding(.top, 8)
 
-                        // Tree
-                        VoxelTreeView(healthPercentage: CGFloat(dashboard.healthScore) / 100.0)
+                        // Tree — reflects selected day's health
+                        VoxelTreeView(healthPercentage: CGFloat(displayHealthScore) / 100.0)
                             .frame(height: 400)
                             .padding(.top, 20)
 
-                        // Date
-                        Text(todayFormatted)
+                        // Date — reflects selected day
+                        Text(formattedDate(selectedDate))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .padding(.top, 8)
 
-                        // Health bars
-                        HealthBarView(healthScore: dashboard.healthScore)
-                            .padding(.horizontal, 60)
-                            .padding(.top, 16)
+                        // Timeline scroller
+                        HealthBarView(
+                            healthScore: dashboard.healthScore,
+                            transactions: transactions
+                        ) { date, score in
+                            selectedDate = date
+                            selectedHealthScore = score
+                        }
+                        .padding(.horizontal, 60)
+                        .padding(.top, 16)
 
                         // --- NYT: Financial Health Glass Card ---
                         HStack {
@@ -95,7 +103,7 @@ struct HomeView: View {
 
                             Spacer()
 
-                            Text("\(dashboard.healthScore)%")
+                            Text("\(displayHealthScore)%")
                                 .font(.title3.weight(.bold))
                                 .foregroundStyle(healthColor)
                         }
@@ -177,16 +185,25 @@ struct HomeView: View {
     }
 
     private var healthColor: Color {
-        guard let d = dashboard else { return .green }
-        if d.healthScore >= 70 { return Color(red: 0.3, green: 0.85, blue: 0.4) }
-        if d.healthScore >= 40 { return .orange }
+        let score = displayHealthScore
+        if score >= 70 { return Color(red: 0.3, green: 0.85, blue: 0.4) }
+        if score >= 40 { return .orange }
         return .red
     }
 
-    private var todayFormatted: String {
+    private var displayHealthScore: Int {
+        selectedHealthScore ?? dashboard?.healthScore ?? 50
+    }
+
+    private func formattedDate(_ date: Date) -> String {
         let f = DateFormatter()
-        f.dateFormat = "EEE. d. MMM."
-        return f.string(from: Date())
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            f.dateFormat = "'Today' – EEE. d. MMM."
+        } else {
+            f.dateFormat = "EEE. d. MMM."
+        }
+        return f.string(from: date)
     }
 
     private func loadDashboard() async {

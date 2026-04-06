@@ -172,8 +172,12 @@ async def build_dashboard(
         top_cat_ratio = (category_totals.get(top_cat, 0) / total_spending)
 
     # Calculate tree score
+    net_goal = goal.monthly_net_goal if goal else 0.0
     scoring_result = calculate_tree_health(
         ScoringInput(
+            total_income=total_income,
+            total_spending=total_spending,
+            monthly_net_goal=net_goal,
             discretionary_spent=Decimal(str(discretionary_spent)),
             discretionary_budget=Decimal(str(budget)),
             savings_progress=Decimal(str(savings_progress)),

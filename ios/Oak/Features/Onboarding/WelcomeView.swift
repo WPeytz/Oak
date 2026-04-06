@@ -13,17 +13,10 @@ struct WelcomeView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            // Pixel trees
-            HStack(alignment: .bottom, spacing: 20) {
-                // Small sapling
-                GoalTreeView(progress: 0.1)
-                    .frame(width: 60, height: 80)
-
-                // Large mature tree
-                PixelTreeView(healthScore: 90, treeState: "thriving")
-                    .frame(width: 200, height: 220)
-            }
-            .padding(.bottom, 20)
+            // Voxel tree
+            VoxelTreeView(healthPercentage: 0.9)
+                .frame(width: 220, height: 280)
+                .padding(.bottom, 20)
 
             // Tagline
             VStack(spacing: 4) {
