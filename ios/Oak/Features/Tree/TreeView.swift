@@ -1,3 +1,4 @@
+import SceneKit
 import SwiftUI
 
 struct TreeView: View {
@@ -14,13 +15,9 @@ struct TreeView: View {
                 } else if let dashboard {
                     VStack(spacing: 24) {
                         // Large tree visualization
-                        MoneyTreeCard(
-                            treeState: dashboard.treeState,
-                            healthScore: dashboard.healthScore,
-                            leafDensity: dashboard.leafDensity,
-                            explanation: dashboard.explanation
-                        )
-
+                        VoxelTreeView(healthPercentage: CGFloat(dashboard.healthScore))
+                            .frame(height: 420)
+                        
                         // Health breakdown
                         VStack(alignment: .leading, spacing: 16) {
                             Text("Health factors")

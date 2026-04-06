@@ -16,6 +16,7 @@
 		49CAD38ED4F59238B0C81A9B /* Models.swift in Sources */ = {isa = PBXBuildFile; fileRef = C873AB2AB014B1086307F078 /* Models.swift */; };
 		4D356E30222AE3D4C97AEF78 /* BudgetProgressCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA02E7449336FBD2CE0FC3BF /* BudgetProgressCard.swift */; };
 		725ACFE94B4FB80BF5724E1D /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 918A4E57C6DC65B10C60C3FF /* ContentView.swift */; };
+		75FBE2282F743A1B0026BA8D /* VoxelTreeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 75FBE2272F743A1B0026BA8D /* VoxelTreeView.swift */; };
 		7D1CE30F8332ECEDE3B497C9 /* ActionsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B0E54BB1C2A486F99128D26 /* ActionsCard.swift */; };
 		8040B0B320D6D7DF7085823C /* ConnectBankView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1671466A243BC9D075B68F3 /* ConnectBankView.swift */; };
 		81336A95B5914AB8E43AD976 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B5F6937ACA8F74C78587C0 /* SettingsView.swift */; };
@@ -48,6 +49,7 @@
 		58F07A6F60AFA0448BB56995 /* MoneyTreeCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyTreeCard.swift; sourceTree = "<group>"; };
 		67CF165D75C383350ABF58BC /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		733B5B5128FC5A6383620F82 /* SetGoalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetGoalsView.swift; sourceTree = "<group>"; };
+		75FBE2272F743A1B0026BA8D /* VoxelTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoxelTreeView.swift; sourceTree = "<group>"; };
 		8AD938468CE49EB8F65FDF4F /* BankAuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BankAuthView.swift; sourceTree = "<group>"; };
 		918A4E57C6DC65B10C60C3FF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1671466A243BC9D075B68F3 /* ConnectBankView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectBankView.swift; sourceTree = "<group>"; };
@@ -137,6 +139,7 @@
 		60F547FC4882D855EC40D261 /* Tree */ = {
 			isa = PBXGroup;
 			children = (
+				75FBE2272F743A1B0026BA8D /* VoxelTreeView.swift */,
 				13FB90CC304F43A4E11B34BE /* TreeView.swift */,
 			);
 			path = Tree;
@@ -311,6 +314,7 @@
 				08A0728CE8ED8A76A38D0BAA /* GoalsView.swift in Sources */,
 				EC6C7FC97D7AB9D6A5B250D8 /* HealthBarView.swift in Sources */,
 				DA64280D6F2B850C5AEE7C6E /* HomeView.swift in Sources */,
+				75FBE2282F743A1B0026BA8D /* VoxelTreeView.swift in Sources */,
 				03A18A3D6B961FDB215D3A03 /* InsightsView.swift in Sources */,
 				49CAD38ED4F59238B0C81A9B /* Models.swift in Sources */,
 				A66668B27EA8F328A0D514C9 /* MoneyTreeCard.swift in Sources */,
@@ -460,7 +464,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = L5UF78GFNH;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Oak/Info.plist;
 				INFOPLIST_GENERATION_MODE = GeneratedFile;
@@ -474,7 +478,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = dk.oakapp.Oak;
+				PRODUCT_BUNDLE_IDENTIFIER = dk.oakapp.money;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -486,7 +490,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = L5UF78GFNH;
 				ENABLE_PREVIEWS = YES;
 				INFOPLIST_FILE = Oak/Info.plist;
 				INFOPLIST_GENERATION_MODE = GeneratedFile;
@@ -500,7 +504,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = dk.oakapp.Oak;
+				PRODUCT_BUNDLE_IDENTIFIER = dk.oakapp.money;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

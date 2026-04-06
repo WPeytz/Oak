@@ -1,5 +1,35 @@
+import SceneKit
 import SwiftUI
 
+// MARK: - 1. Glass Card UI Component (Dette giver effekten)
+struct LiquidGlassModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .background(
+                ZStack {
+                    // Selve glas-fladen (Semi-transparent hvid)
+                    RoundedRectangle(cornerRadius: 32)
+                        .fill(Color.white.opacity(0.6))
+                    
+                    // Lys-kant (Bezel) i toppen
+                    RoundedRectangle(cornerRadius: 32)
+                        .stroke(Color.white.opacity(0.5), lineWidth: 1.5)
+                        .offset(y: 1)
+                }
+            )
+            // Meget blød skygge
+            .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 10)
+            .clipShape(RoundedRectangle(cornerRadius: 32))
+    }
+}
+
+extension View {
+    func liquidGlassCard() -> some View {
+        self.modifier(LiquidGlassModifier())
+    }
+}
+
+// MARK: - 2. Home View
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
     @State private var dashboard: Dashboard?
@@ -11,12 +41,11 @@ struct HomeView: View {
 
     var body: some View {
         ZStack {
-            // Background gradient
+            // Background gradient (RGB: 130, 213, 120)
             LinearGradient(
                 colors: [
-                    Color(red: 0.92, green: 0.97, blue: 0.92),
-                    Color(red: 0.96, green: 0.99, blue: 0.96),
-                    .white,
+                    Color.white,
+                    Color(red: 130/255, green: 213/255, blue: 120/255)
                 ],
                 startPoint: .top,
                 endPoint: .bottom
@@ -36,18 +65,16 @@ struct HomeView: View {
                             } label: {
                                 Image(systemName: "gearshape")
                                     .font(.title3)
-                                    .foregroundStyle(Color(red: 0.3, green: 0.5, blue: 0.35))
+                                    .foregroundStyle(Color(red: 0.2, green: 0.4, blue: 0.2))
                             }
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 8)
 
                         // Tree
-                        PixelTreeView(
-                            healthScore: dashboard.healthScore,
-                            treeState: dashboard.treeState
-                        )
-                        .padding(.top, 20)
+                        VoxelTreeView(healthPercentage: CGFloat(dashboard.healthScore) / 100.0)
+                            .frame(height: 400)
+                            .padding(.top, 20)
 
                         // Date
                         Text(todayFormatted)
@@ -60,11 +87,11 @@ struct HomeView: View {
                             .padding(.horizontal, 60)
                             .padding(.top, 16)
 
-                        // Financial Health pill
+                        // --- NYT: Financial Health Glass Card ---
                         HStack {
                             Text("Financial Health")
                                 .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(Color(red: 0.2, green: 0.3, blue: 0.2))
 
                             Spacer()
 
@@ -72,31 +99,26 @@ struct HomeView: View {
                                 .font(.title3.weight(.bold))
                                 .foregroundStyle(healthColor)
                         }
-                        .padding(.horizontal, 20)
-                        .padding(.vertical, 12)
-                        .background(
-                            RoundedRectangle(cornerRadius: 20)
-                                .fill(Color(red: 0.15, green: 0.15, blue: 0.15))
-                        )
                         .padding(.horizontal, 24)
-                        .padding(.top, 16)
+                        .padding(.vertical, 16)
+                        .liquidGlassCard() // HER påføres glasset
+                        .padding(.horizontal, 24)
+                        .padding(.top, 24)
 
-                        // Recent Transactions
+                        // --- NYT: Recent Transactions Glass Card ---
                         VStack(alignment: .leading, spacing: 0) {
                             HStack {
                                 Text("Recent Transactions")
-                                    .font(.subheadline.weight(.medium))
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Color(red: 0.2, green: 0.4, blue: 0.2))
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.caption)
                                     .foregroundStyle(.tertiary)
                             }
                             .padding(.horizontal, 24)
-                            .padding(.top, 20)
+                            .padding(.top, 24)
                             .padding(.bottom, 12)
-
-                            Divider()
-                                .padding(.horizontal, 24)
 
                             if transactions.isEmpty {
                                 Text("No transactions yet")
@@ -106,14 +128,20 @@ struct HomeView: View {
                             } else {
                                 ForEach(transactions.prefix(5)) { txn in
                                     HomeTransactionRow(transaction: txn)
+                                    
                                     if txn.id != transactions.prefix(5).last?.id {
-                                        Divider()
-                                            .padding(.leading, 60)
+                                        Rectangle()
+                                            .fill(Color.black.opacity(0.05))
+                                            .frame(height: 1)
+                                            .padding(.horizontal, 24)
                                     }
                                 }
+                                .padding(.bottom, 12)
                             }
                         }
-                        .padding(.top, 8)
+                        .liquidGlassCard() // HER påføres glasset
+                        .padding(.horizontal, 24)
+                        .padding(.top, 16)
                         .padding(.bottom, 100)
                     }
                 }
@@ -165,7 +193,6 @@ struct HomeView: View {
         guard let userId = appState.userId else { return }
         isLoading = true
         errorMessage = nil
-
         do {
             async let d = APIClient.shared.getDashboard(userId: userId)
             async let t = APIClient.shared.listTransactions(userId: userId)
@@ -194,7 +221,6 @@ struct HomeView: View {
 }
 
 // MARK: - Transaction row (home style)
-
 private struct HomeTransactionRow: View {
     let transaction: Transaction
 
@@ -207,6 +233,7 @@ private struct HomeTransactionRow: View {
 
             Text(transaction.merchant ?? "Unknown")
                 .font(.subheadline)
+                .foregroundStyle(Color.primary.opacity(0.8))
                 .lineLimit(1)
 
             Spacer()
@@ -256,7 +283,7 @@ private struct HomeTransactionRow: View {
         formatter.maximumFractionDigits = 2
         formatter.groupingSeparator = "."
         formatter.decimalSeparator = ","
-        let formatted = formatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
-        return formatted
+        return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
     }
 }
+
