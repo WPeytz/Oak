@@ -108,7 +108,7 @@ struct SettingsView: View {
             .navigationTitle("Settings")
             .sheet(isPresented: $showConnectBank) {
                 NavigationStack {
-                    ConnectBankView(userId: appState.userId ?? UUID()) {
+                    ConnectBankView(userId: appState.userId ?? UUID()) { _, _ in
                         showConnectBank = false
                     }
                     .navigationTitle("Connect Bank")

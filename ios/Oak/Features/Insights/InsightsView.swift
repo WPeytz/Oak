@@ -20,24 +20,24 @@ struct InsightsView: View {
                         .padding(.vertical, 40)
                     }
                 } else {
-                    // Summary
-                    if let dashboard {
+                    // Summary (computed from all transactions)
+                    if !transactions.isEmpty {
                         Section {
                             HStack(spacing: 12) {
                                 SummaryPill(
                                     label: "Income",
-                                    value: formatDKK(dashboard.totalIncome),
+                                    value: formatDKK(totalIncome),
                                     color: .green
                                 )
                                 SummaryPill(
                                     label: "Spending",
-                                    value: formatDKK(dashboard.totalSpending),
+                                    value: formatDKK(totalSpending),
                                     color: .red
                                 )
                                 SummaryPill(
                                     label: "Net",
-                                    value: formatDKK(dashboard.totalIncome - dashboard.totalSpending),
-                                    color: dashboard.totalIncome > dashboard.totalSpending ? .green : .red
+                                    value: formatDKK(totalIncome - totalSpending),
+                                    color: totalIncome > totalSpending ? .green : .red
                                 )
                             }
                             .listRowInsets(EdgeInsets())
@@ -45,12 +45,12 @@ struct InsightsView: View {
                         }
 
                         // Tappable category breakdown
-                        if !dashboard.topCategories.isEmpty {
+                        if let categories = dashboard?.topCategories, !categories.isEmpty {
                             Section("Categories") {
-                                ForEach(dashboard.topCategories) { category in
+                                ForEach(categories) { category in
                                     CategoryTapRow(
                                         category: category,
-                                        maxTotal: dashboard.topCategories.first?.total ?? 1,
+                                        maxTotal: categories.first?.total ?? 1,
                                         isSelected: selectedCategory == category.category
                                     )
                                     .contentShape(Rectangle())
@@ -106,6 +106,20 @@ struct InsightsView: View {
             .refreshable {
                 await loadData()
             }
+        }
+    }
+
+    private var totalIncome: Double {
+        transactions.reduce(0.0) { sum, txn in
+            let val = NSDecimalNumber(decimal: txn.amount).doubleValue
+            return val > 0 ? sum + val : sum
+        }
+    }
+
+    private var totalSpending: Double {
+        transactions.reduce(0.0) { sum, txn in
+            let val = NSDecimalNumber(decimal: txn.amount).doubleValue
+            return val < 0 ? sum + abs(val) : sum
         }
     }
 

@@ -7,7 +7,10 @@ struct OakApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
-                if appState.hasCompletedOnboarding {
+                if appState.isRestoringSession {
+                    Color.green
+                        .ignoresSafeArea()
+                } else if appState.hasCompletedOnboarding {
                     ContentView()
                 } else {
                     OnboardingFlow()

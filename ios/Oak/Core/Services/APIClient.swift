@@ -85,13 +85,15 @@ class APIClient {
     func upsertGoal(
         userId: UUID,
         budget: Double,
-        savingsTarget: Double
+        savingsTarget: Double,
+        netGoal: Double = 0
     ) async throws -> SpendingGoal {
         try await put(
             "api/goals/\(userId)",
             body: UpsertGoalRequest(
                 monthlyDiscretionaryBudget: budget,
-                monthlySavingsTarget: savingsTarget
+                monthlySavingsTarget: savingsTarget,
+                monthlyNetGoal: netGoal
             )
         )
     }

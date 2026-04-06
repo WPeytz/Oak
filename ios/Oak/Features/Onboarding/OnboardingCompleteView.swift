@@ -3,6 +3,7 @@ import SwiftUI
 struct OnboardingCompleteView: View {
     @EnvironmentObject var appState: AppState
     var syncedCount: Int = 0
+    var accountBalance: Double?
 
     @State private var showCheckmark = false
 
@@ -48,6 +49,16 @@ struct OnboardingCompleteView: View {
                         Text("\(syncedCount)")
                             .font(.subheadline.bold())
                     }
+
+                    if let balance = accountBalance {
+                        HStack {
+                            Text("Account balance:")
+                                .font(.subheadline)
+                            Spacer()
+                            Text(formatBalance(balance))
+                                .font(.subheadline.bold())
+                        }
+                    }
                 }
                 .padding(20)
                 .background(.white.opacity(0.7))
@@ -87,5 +98,14 @@ struct OnboardingCompleteView: View {
                 showCheckmark = true
             }
         }
+    }
+
+    private func formatBalance(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 0
+        formatter.groupingSeparator = "."
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? "\(Int(value))"
+        return "\(formatted)kr"
     }
 }

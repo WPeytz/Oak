@@ -1,9 +1,10 @@
 import AuthenticationServices
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ConnectBankView: View {
     let userId: UUID
-    let onComplete: () -> Void
+    let onComplete: (Int, Double?) -> Void
 
     @State private var institutions: [Institution] = []
     @State private var isLoadingInstitutions = true
@@ -14,10 +15,11 @@ struct ConnectBankView: View {
     @State private var isPolling = false
     @State private var connectionStatus: String?
     @State private var errorMessage: String?
+    @State private var showCSVPicker = false
+    @State private var isImporting = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Title
             VStack(alignment: .leading, spacing: 4) {
                 Text("Connect Bank")
                     .font(.title.bold())
@@ -29,7 +31,6 @@ struct ConnectBankView: View {
             .padding(.horizontal, 24)
             .padding(.top, 20)
 
-            // Security card
             HStack(spacing: 14) {
                 Image(systemName: "shield.checkered")
                     .font(.title2)
@@ -49,15 +50,15 @@ struct ConnectBankView: View {
             .padding(.horizontal, 24)
             .padding(.top, 20)
 
-            // Bank list
-            if isConnecting {
+            if isConnecting || isImporting {
                 Spacer()
                 HStack {
                     Spacer()
                     VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        Text("Connecting to \(selectedInstitution?.name ?? "bank")...")
+                        ProgressView().scaleEffect(1.5)
+                        Text(isImporting
+                             ? "Importing transactions..."
+                             : "Connecting to \(selectedInstitution?.name ?? "bank")...")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -69,18 +70,13 @@ struct ConnectBankView: View {
                 HStack {
                     Spacer()
                     VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.5)
+                        ProgressView().scaleEffect(1.5)
                         Text("Waiting for authorization...")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
                     Spacer()
                 }
-                Spacer()
-            } else if isLoadingInstitutions {
-                Spacer()
-                HStack { Spacer(); ProgressView(); Spacer() }
                 Spacer()
             } else {
                 Text("Select your Bank")
@@ -92,35 +88,68 @@ struct ConnectBankView: View {
 
                 ScrollView {
                     VStack(spacing: 8) {
-                        ForEach(institutions) { inst in
-                            Button {
-                                selectInstitution(inst)
-                            } label: {
-                                HStack(spacing: 14) {
-                                    // Bank icon placeholder
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .fill(Color(red: 0.2, green: 0.35, blue: 0.5).opacity(0.15))
-                                        .frame(width: 44, height: 44)
-                                        .overlay {
-                                            Text(String(inst.name.prefix(2)))
-                                                .font(.caption.bold())
-                                                .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.5))
-                                        }
+                        // Upload CSV — highlighted green
+                        Button {
+                            showCSVPicker = true
+                        } label: {
+                            HStack(spacing: 14) {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color(red: 0.2, green: 0.5, blue: 0.25))
+                                    .frame(width: 44, height: 44)
+                                    .overlay {
+                                        Image(systemName: "tablecells")
+                                            .font(.body.bold())
+                                            .foregroundStyle(.white)
+                                    }
 
-                                    Text(inst.name)
-                                        .font(.body)
-                                        .foregroundStyle(.primary)
+                                Text("Upload CSV")
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(.white)
 
-                                    Spacer()
+                                Spacer()
 
-                                    Image(systemName: "chevron.right")
-                                        .font(.caption)
-                                        .foregroundStyle(.tertiary)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(.white.opacity(0.7))
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 14)
+                            .background(Color(red: 0.2, green: 0.5, blue: 0.25))
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                        }
+
+                        if isLoadingInstitutions {
+                            ProgressView().padding(.vertical, 20)
+                        } else {
+                            ForEach(institutions) { inst in
+                                Button {
+                                    selectInstitution(inst)
+                                } label: {
+                                    HStack(spacing: 14) {
+                                        RoundedRectangle(cornerRadius: 10)
+                                            .fill(Color(red: 0.2, green: 0.35, blue: 0.5).opacity(0.15))
+                                            .frame(width: 44, height: 44)
+                                            .overlay {
+                                                Text(String(inst.name.prefix(2)))
+                                                    .font(.caption.bold())
+                                                    .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.5))
+                                            }
+
+                                        Text(inst.name)
+                                            .font(.body)
+                                            .foregroundStyle(.primary)
+
+                                        Spacer()
+
+                                        Image(systemName: "chevron.right")
+                                            .font(.caption)
+                                            .foregroundStyle(.tertiary)
+                                    }
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 14)
+                                    .background(.white.opacity(0.7))
+                                    .clipShape(RoundedRectangle(cornerRadius: 14))
                                 }
-                                .padding(.horizontal, 16)
-                                .padding(.vertical, 14)
-                                .background(.white.opacity(0.7))
-                                .clipShape(RoundedRectangle(cornerRadius: 14))
                             }
                         }
                     }
@@ -136,10 +165,9 @@ struct ConnectBankView: View {
                     .padding(.top, 8)
             }
 
-            // Skip
-            if !isConnecting && !isPolling {
+            if !isConnecting && !isPolling && !isImporting {
                 Button("Skip for now") {
-                    onComplete()
+                    onComplete(0, nil)
                 }
                 .font(.subheadline)
                 .foregroundStyle(Color(red: 0.3, green: 0.5, blue: 0.33))
@@ -157,9 +185,49 @@ struct ConnectBankView: View {
                 handleBankCallback(callbackURL)
             }
         }
+        .fileImporter(
+            isPresented: $showCSVPicker,
+            allowedContentTypes: [.commaSeparatedText, .plainText, .data],
+            allowsMultipleSelection: false
+        ) { result in
+            Task { await handleCSVImport(result) }
+        }
     }
 
-    // MARK: - Actions
+    private func handleCSVImport(_ result: Result<[URL], Error>) async {
+        guard case .success(let urls) = result,
+              let url = urls.first else {
+            errorMessage = "Could not read file"
+            return
+        }
+
+        let accessed = url.startAccessingSecurityScopedResource()
+        let data: Data
+        let filename = url.lastPathComponent
+        do {
+            data = try Data(contentsOf: url)
+        } catch {
+            if accessed { url.stopAccessingSecurityScopedResource() }
+            errorMessage = "Import failed: \(error.localizedDescription)"
+            return
+        }
+        if accessed { url.stopAccessingSecurityScopedResource() }
+
+        isImporting = true
+        errorMessage = nil
+
+        do {
+            let response = try await APIClient.shared.importCSV(
+                userId: userId,
+                csvData: data,
+                filename: filename
+            )
+            onComplete(response.transactionsImported, nil)
+        } catch {
+            errorMessage = "Import failed: \(error.localizedDescription)"
+        }
+        isImporting = false
+    }
 
     private func loadInstitutions() async {
         do {
@@ -184,8 +252,8 @@ struct ConnectBankView: View {
                 connectionId = connection.id
 
                 if connection.status == "linked" {
-                    _ = try? await APIClient.shared.syncTransactions(userId: userId)
-                    onComplete()
+                    let syncResult = try? await APIClient.shared.syncTransactions(userId: userId)
+                    onComplete(syncResult?.transactionsSynced ?? 0, nil)
                 } else if let urlString = connection.authorizationUrl,
                           let url = URL(string: urlString) {
                     authorizationURL = url
@@ -212,7 +280,7 @@ struct ConnectBankView: View {
         )
 
         if params["status"] == "success" {
-            onComplete()
+            onComplete(0, nil)
         } else if params["status"] == "expired" || params["status"] == "revoked" {
             errorMessage = "Bank connection failed. Please try again."
         } else {
@@ -231,8 +299,8 @@ struct ConnectBankView: View {
                     )
                     connectionStatus = status.status
                     if status.status == "linked" {
-                        _ = try? await APIClient.shared.syncTransactions(userId: userId)
-                        onComplete()
+                        let syncResult = try? await APIClient.shared.syncTransactions(userId: userId)
+                        onComplete(syncResult?.transactionsSynced ?? 0, nil)
                         return
                     } else if status.status == "expired" || status.status == "revoked" {
                         errorMessage = "Connection failed. Please try again."

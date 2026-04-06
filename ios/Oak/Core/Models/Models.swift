@@ -63,6 +63,7 @@ struct SpendingGoal: Codable, Identifiable {
     let userId: UUID
     let monthlyDiscretionaryBudget: Double
     let monthlySavingsTarget: Double
+    let monthlyNetGoal: Double?
 }
 
 // MARK: - Bank connection
@@ -182,6 +183,7 @@ struct CreateUserRequest: Codable {
 struct UpsertGoalRequest: Codable {
     let monthlyDiscretionaryBudget: Double
     let monthlySavingsTarget: Double
+    let monthlyNetGoal: Double
 }
 
 struct CreateConnectionRequest: Codable {

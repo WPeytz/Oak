@@ -17,6 +17,7 @@ class GoalServiceBase(ABC):
         user_id: uuid.UUID,
         monthly_discretionary_budget: float,
         monthly_savings_target: float,
+        monthly_net_goal: float,
     ) -> SpendingGoal: ...
 
 
@@ -35,11 +36,13 @@ class GoalService(GoalServiceBase):
         user_id: uuid.UUID,
         monthly_discretionary_budget: float,
         monthly_savings_target: float,
+        monthly_net_goal: float = 0.0,
     ) -> SpendingGoal:
         existing = await self.get_for_user(user_id)
         if existing:
             existing.monthly_discretionary_budget = monthly_discretionary_budget
             existing.monthly_savings_target = monthly_savings_target
+            existing.monthly_net_goal = monthly_net_goal
             await self.db.flush()
             return existing
 
@@ -47,6 +50,7 @@ class GoalService(GoalServiceBase):
             user_id=user_id,
             monthly_discretionary_budget=monthly_discretionary_budget,
             monthly_savings_target=monthly_savings_target,
+            monthly_net_goal=monthly_net_goal,
         )
         self.db.add(goal)
         await self.db.flush()

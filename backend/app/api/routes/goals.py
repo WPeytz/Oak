@@ -27,6 +27,7 @@ async def upsert_goal(
         user_id=user_id,
         monthly_discretionary_budget=body.monthly_discretionary_budget,
         monthly_savings_target=body.monthly_savings_target,
+        monthly_net_goal=body.monthly_net_goal,
     )
     await db.commit()
     return goal

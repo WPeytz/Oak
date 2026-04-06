@@ -3,6 +3,7 @@ import SwiftUI
 enum OnboardingStep: Int, CaseIterable {
     case welcome
     case createAccount
+    case setGoal
     case connectBank
     case complete
 }
@@ -12,6 +13,7 @@ struct OnboardingFlow: View {
     @State private var step: OnboardingStep = .welcome
     @State private var createdUser: User?
     @State private var syncedCount: Int = 0
+    @State private var accountBalance: Double?
 
     var body: some View {
         ZStack {
@@ -31,12 +33,16 @@ struct OnboardingFlow: View {
                 // Progress header (not on welcome)
                 if step != .welcome {
                     OnboardingHeader(
-                        currentStep: step.rawValue,
-                        totalSteps: 3,
+                        currentStep: progressStep,
+                        totalSteps: 4,
                         onBack: {
                             withAnimation {
-                                if step == .createAccount { step = .welcome }
-                                else if step == .connectBank { step = .createAccount }
+                                switch step {
+                                case .createAccount: step = .welcome
+                                case .setGoal: step = .createAccount
+                                case .connectBank: step = .setGoal
+                                default: break
+                                }
                             }
                         }
                     )
@@ -60,19 +66,37 @@ struct OnboardingFlow: View {
                         CreateAccountView { user in
                             createdUser = user
                             appState.setUser(user)
+                            withAnimation { step = .setGoal }
+                        }
+
+                    case .setGoal:
+                        SetNetGoalView(userId: createdUser!.id) {
                             withAnimation { step = .connectBank }
                         }
 
                     case .connectBank:
-                        ConnectBankView(userId: createdUser!.id) {
+                        ConnectBankView(userId: createdUser!.id) { count, balance in
+                            syncedCount = count
+                            accountBalance = balance
                             withAnimation { step = .complete }
                         }
 
                     case .complete:
-                        OnboardingCompleteView(syncedCount: syncedCount)
+                        OnboardingCompleteView(syncedCount: syncedCount, accountBalance: accountBalance)
                     }
                 }
             }
+        }
+        .environment(\.colorScheme, .light)
+    }
+
+    private var progressStep: Int {
+        switch step {
+        case .welcome: return 0
+        case .createAccount: return 1
+        case .setGoal: return 2
+        case .connectBank: return 3
+        case .complete: return 4
         }
     }
 }

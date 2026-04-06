@@ -1,66 +1,68 @@
 import SwiftUI
 
+struct DayHealth: Identifiable {
+    let id: Int
+    let date: Date
+    let healthScore: Int
+}
+
 struct HealthBarView: View {
     let healthScore: Int
-    
-    // State til haptisk feedback
-    @State private var scrollTarget: Int? = 0
-    
+    let transactions: [Transaction]
+    let onDateSelected: (Date, Int) -> Void
+
+    @State private var scrollTarget: Int?
+    @State private var dailyHealth: [DayHealth] = []
+
     private let primaryBarColor = Color(red: 92/255, green: 157/255, blue: 84/255)
-    private let totalBars = 80
     private let barWidth: CGFloat = 5
     private let spacing: CGFloat = 6
-    
-    // Højde-indstillinger
-    private let idleHeight: CGFloat = 28.0
-    private let scaleFactor: CGFloat = 0.8
-    private var maxHeight: CGFloat { idleHeight * (1 + scaleFactor) }
+
+    private let minBarHeight: CGFloat = 10.0
+    private let maxBarHeight: CGFloat = 50.0
 
     var body: some View {
         GeometryReader { container in
             let midX = container.size.width / 2
-            
+
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .center, spacing: spacing) {
-                    // Start-spacer
                     Color.clear.frame(width: midX - (barWidth / 2))
-                    
-                    ForEach(0..<totalBars, id: \.self) { i in
+
+                    ForEach(dailyHealth) { day in
+                        let normalizedHeight = minBarHeight + (maxBarHeight - minBarHeight) * CGFloat(day.healthScore) / 100.0
+
                         Capsule()
                             .fill(primaryBarColor)
-                            .frame(width: barWidth, height: idleHeight)
+                            .frame(width: barWidth, height: normalizedHeight)
                             .visualEffect { content, proxy in
                                 let frame = proxy.frame(in: .scrollView)
                                 let distance = abs(frame.midX - midX)
-                                
-                                // Nåle-effekt kurve
+
                                 let influence = max(0, 1.0 - (distance / 35))
                                 let needleFactor = pow(influence, 1.2)
-                                
-                                // Blur effekt
+
                                 let normalizedDistance = min(distance / (midX * 0.9), 1.0)
                                 let blurAmount = normalizedDistance * 3.0
-                                
+
                                 return content
-                                    .scaleEffect(y: 1.0 + (scaleFactor * needleFactor), anchor: .center)
+                                    .scaleEffect(y: 1.0 + (0.5 * needleFactor), anchor: .center)
                                     .blur(radius: blurAmount)
                                     .opacity(0.4 + (0.6 * (1.0 - normalizedDistance)))
                             }
+                            .id(day.id)
                     }
-                    
-                    // Slut-spacer
+
                     Color.clear.frame(width: midX - (barWidth / 2))
                 }
                 .scrollTargetLayout()
             }
-            // Dette sikrer at vi tracker hvilken ID der er i midten til haptics
             .scrollPosition(id: $scrollTarget)
             .scrollTargetBehavior(.viewAligned)
             .coordinateSpace(name: "scroll")
-            // Haptisk feedback hver gang scrollTarget ændrer sig
             .sensoryFeedback(.selection, trigger: scrollTarget)
         }
-        .frame(height: maxHeight)
+        .frame(height: maxBarHeight * 1.8)
         .mask(
             LinearGradient(
                 stops: [
@@ -73,11 +75,80 @@ struct HealthBarView: View {
                 endPoint: .trailing
             )
         )
+        .onAppear {
+            buildDailyHealth()
+        }
+        .onChange(of: transactions.count) {
+            buildDailyHealth()
+        }
+        .onChange(of: scrollTarget) { _, newValue in
+            guard let idx = newValue,
+                  idx >= 0, idx < dailyHealth.count else { return }
+            let day = dailyHealth[idx]
+            onDateSelected(day.date, day.healthScore)
+        }
+    }
+
+    private func buildDailyHealth() {
+        let calendar = Calendar.current
+
+        let grouped = Dictionary(grouping: transactions) { txn in
+            calendar.startOfDay(for: txn.bookedAt)
+        }
+
+        let sortedDates = grouped.keys.sorted()
+        guard let firstDate = sortedDates.first,
+              let lastDate = sortedDates.last else {
+            dailyHealth = [DayHealth(id: 0, date: Date(), healthScore: healthScore)]
+            scrollTarget = 0
+            return
+        }
+
+        var days: [DayHealth] = []
+        var currentDate = firstDate
+        var idx = 0
+        var cumulativeIncome: Double = 0
+        var cumulativeSpending: Double = 0
+
+        while currentDate <= lastDate {
+            if let dayTxns = grouped[currentDate] {
+                for txn in dayTxns {
+                    let amount = NSDecimalNumber(decimal: txn.amount).doubleValue
+                    if amount > 0 {
+                        cumulativeIncome += amount
+                    } else {
+                        cumulativeSpending += abs(amount)
+                    }
+                }
+            }
+
+            let score: Int
+            if cumulativeIncome > 0 {
+                let ratio = cumulativeSpending / cumulativeIncome
+                score = max(0, min(100, Int((1.0 - ratio) * 100)))
+            } else if cumulativeSpending > 0 {
+                score = 0
+            } else {
+                score = 100
+            }
+
+            days.append(DayHealth(id: idx, date: currentDate, healthScore: score))
+            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
+            idx += 1
+        }
+
+        let today = calendar.startOfDay(for: Date())
+        if let last = days.last, last.date < today {
+            days.append(DayHealth(id: idx, date: today, healthScore: days.last?.healthScore ?? healthScore))
+        }
+
+        dailyHealth = days
+        scrollTarget = days.count - 1
     }
 }
 
 #Preview {
-    HealthBarView(healthScore: 50)
+    HealthBarView(healthScore: 50, transactions: []) { _, _ in }
         .frame(width: 350, height: 100)
         .background(Color.gray.opacity(0.1))
 }

@@ -42,6 +42,8 @@ struct HomeView: View {
     @State private var transactions: [Transaction] = []
     @State private var isLoading = true
     @State private var showSettings = false
+    @State private var selectedDate: Date = Date()
+    @State private var selectedHealthScore: Int?
 
     enum SheetPosition { case collapsed, expanded }
     @State private var sheetPosition: SheetPosition = .collapsed
@@ -59,11 +61,23 @@ struct HomeView: View {
 
             VStack(spacing: 0) {
                 if let dashboard = dashboard {
-                    VoxelTreeView(healthPercentage: CGFloat(dashboard.healthScore) / 100.0)
+                    VoxelTreeView(healthPercentage: CGFloat(displayHealthScore) / 100.0)
                         .frame(height: 350)
                         .padding(.top, 60)
-                    HealthBarView(healthScore: dashboard.healthScore)
-                        .padding(.horizontal, 60)
+
+                    Text(formattedDate(selectedDate))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .padding(.top, 4)
+
+                    HealthBarView(
+                        healthScore: dashboard.healthScore,
+                        transactions: transactions
+                    ) { date, score in
+                        selectedDate = date
+                        selectedHealthScore = score
+                    }
+                    .padding(.horizontal, 60)
                 }
                 Spacer()
             }
@@ -157,7 +171,7 @@ struct HomeView: View {
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(Capsule().fill(oakBrandGreen.opacity(0.8)))
             Spacer()
-            Text("\(dashboard?.healthScore ?? 0)%")
+            Text("\(displayHealthScore)%")
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundStyle(oakBrandGreen)
         }
@@ -192,6 +206,21 @@ struct HomeView: View {
         .background(RoundedRectangle(cornerRadius: 28).fill(Color.white.opacity(0.35)))
         .overlay(RoundedRectangle(cornerRadius: 28).stroke(Color.white.opacity(0.5), lineWidth: 1))
         .padding(.horizontal, 16)
+    }
+
+    private var displayHealthScore: Int {
+        selectedHealthScore ?? dashboard?.healthScore ?? 50
+    }
+
+    private func formattedDate(_ date: Date) -> String {
+        let f = DateFormatter()
+        let calendar = Calendar.current
+        if calendar.isDateInToday(date) {
+            f.dateFormat = "'Today' – EEE. d. MMM."
+        } else {
+            f.dateFormat = "EEE. d. MMM."
+        }
+        return f.string(from: date)
     }
 
     private func loadDashboard() async {
