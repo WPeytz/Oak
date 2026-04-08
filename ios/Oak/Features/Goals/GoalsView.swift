@@ -25,7 +25,7 @@ struct GoalsView: View {
                             ForEach(Array(goals.enumerated()), id: \.element.id) { index, goal in
                                 ZStack {
                                     // 1. Det usynlige link (fjerner pilen)
-                                    NavigationLink(destination: GoalDetailView(goal: goal)) {
+                                    NavigationLink(destination: GoalDetailScreen(goal: goal)) {
                                         EmptyView()
                                     }
                                     .opacity(0)
