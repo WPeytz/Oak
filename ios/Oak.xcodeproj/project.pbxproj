@@ -20,7 +20,7 @@
 		7D1CE30F8332ECEDE3B497C9 /* ActionsCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B0E54BB1C2A486F99128D26 /* ActionsCard.swift */; };
 		8040B0B320D6D7DF7085823C /* ConnectBankView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1671466A243BC9D075B68F3 /* ConnectBankView.swift */; };
 		81336A95B5914AB8E43AD976 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 22B5F6937ACA8F74C78587C0 /* SettingsView.swift */; };
-		8205C62C2F83BED400B2A6C2 /* SetNetGoalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8205C62B2F83BED400B2A6C2 /* SetNetGoalView.swift */; };
+		8205C62A2F83B2E800B2A6C2 /* SetNetGoalView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8205C6292F83B2E800B2A6C2 /* SetNetGoalView.swift */; };
 		834BA18DC63A30A4C477ABE1 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = A555F4BDFD0930F2A23386B5 /* AppState.swift */; };
 		840A9E322966EB41FF1E356A /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67CF165D75C383350ABF58BC /* APIClient.swift */; };
 		8C831319B8AF05D32A0F8608 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 08E0A4A56EADCDB21276DE81 /* Assets.xcassets */; };
@@ -51,7 +51,7 @@
 		67CF165D75C383350ABF58BC /* APIClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = APIClient.swift; sourceTree = "<group>"; };
 		733B5B5128FC5A6383620F82 /* SetGoalsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetGoalsView.swift; sourceTree = "<group>"; };
 		75FBE2272F743A1B0026BA8D /* VoxelTreeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VoxelTreeView.swift; sourceTree = "<group>"; };
-		8205C62B2F83BED400B2A6C2 /* SetNetGoalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetNetGoalView.swift; sourceTree = "<group>"; };
+		8205C6292F83B2E800B2A6C2 /* SetNetGoalView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SetNetGoalView.swift; sourceTree = "<group>"; };
 		8AD938468CE49EB8F65FDF4F /* BankAuthView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BankAuthView.swift; sourceTree = "<group>"; };
 		918A4E57C6DC65B10C60C3FF /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		A1671466A243BC9D075B68F3 /* ConnectBankView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConnectBankView.swift; sourceTree = "<group>"; };
@@ -189,7 +189,7 @@
 		99C4F000DB4611189B908B69 /* Onboarding */ = {
 			isa = PBXGroup;
 			children = (
-				8205C62B2F83BED400B2A6C2 /* SetNetGoalView.swift */,
+				8205C6292F83B2E800B2A6C2 /* SetNetGoalView.swift */,
 				8AD938468CE49EB8F65FDF4F /* BankAuthView.swift */,
 				A1671466A243BC9D075B68F3 /* ConnectBankView.swift */,
 				0A4BDA53A0AA9EDD84FE9D01 /* CreateAccountView.swift */,
@@ -327,7 +327,7 @@
 				F9D98827320118248D78D4F6 /* PixelTreeView.swift in Sources */,
 				BF5BA60A2E6F42597D34D070 /* SetGoalsView.swift in Sources */,
 				81336A95B5914AB8E43AD976 /* SettingsView.swift in Sources */,
-				8205C62C2F83BED400B2A6C2 /* SetNetGoalView.swift in Sources */,
+				8205C62A2F83B2E800B2A6C2 /* SetNetGoalView.swift in Sources */,
 				13FE95459C9275829BB734A4 /* SpendingInsightsCard.swift in Sources */,
 				497D5B4804DA216093C13245 /* TreeView.swift in Sources */,
 				F24FBF87DAC8CD28FB386062 /* WelcomeView.swift in Sources */,

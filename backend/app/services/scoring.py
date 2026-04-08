@@ -6,21 +6,21 @@ from decimal import Decimal
 class ScoringInput:
     total_income: float
     total_spending: float
-    monthly_net_goal: float
+    monthly_net_goal: float  # user's target net (income - spending)
     discretionary_spent: Decimal
     discretionary_budget: Decimal
-    savings_progress: Decimal
+    savings_progress: Decimal  # 0.0 to 1.0+ (fraction of target achieved)
     top_category: str | None
-    top_category_ratio: float
-    trend: str
+    top_category_ratio: float  # how concentrated spending is in one category
+    trend: str  # "improving" | "stable" | "worsening"
 
 
 @dataclass
 class ScoringOutput:
-    health_score: int
-    tree_state: str
-    leaf_density: float
-    stress_level: float
+    health_score: int  # 0-100
+    tree_state: str  # thriving | healthy | stressed | decaying
+    leaf_density: float  # 0.0-1.0
+    stress_level: float  # 0.0-1.0
     explanation: str
 
 
@@ -41,25 +41,41 @@ def classify_tree_state(score: int) -> str:
 
 
 def calculate_tree_health(scoring_input: ScoringInput) -> ScoringOutput:
+    """Calculate tree health score from recent financial behavior.
+
+    Primary metric: how close is your net (income - spending) to your goal.
+    If you hit the goal, you get 100%. Below the goal scales linearly down.
+    """
     net = scoring_input.total_income - scoring_input.total_spending
     goal = scoring_input.monthly_net_goal
 
     if goal != 0:
+        # Net-goal based scoring
+        # At or above goal → 100
+        # At zero net → scales based on how far from goal
+        # Negative net → can go below 0 but capped at 0
         if goal > 0:
             ratio = net / goal
         else:
+            # Negative goal (user expects to spend more than earn)
+            # If net >= goal, they're doing as well or better than expected
             ratio = 1.0 if net >= goal else net / goal
 
+        # ratio >= 1.0 means goal met or exceeded → 100
+        # ratio = 0.5 means halfway → 50
+        # ratio <= 0 means no progress → 0
         score = max(0, min(100, int(ratio * 100)))
     else:
+        # No net goal set — fall back to simple income/spending ratio
         if scoring_input.total_income > 0:
             ratio = scoring_input.total_spending / scoring_input.total_income
             score = max(0, min(100, int((1.0 - ratio) * 100)))
         elif scoring_input.total_spending > 0:
             score = 0
         else:
-            score = 50
+            score = 50  # no data
 
+    # Small trend bonus/penalty (±5 points)
     if scoring_input.trend == "improving":
         score = min(100, score + 5)
     elif scoring_input.trend == "worsening":

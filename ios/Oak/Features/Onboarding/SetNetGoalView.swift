@@ -10,6 +10,7 @@ struct SetNetGoalView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Title
             VStack(alignment: .leading, spacing: 4) {
                 Text("Set your goal")
                     .font(.title.bold())
@@ -21,6 +22,7 @@ struct SetNetGoalView: View {
             .padding(.horizontal, 24)
             .padding(.top, 20)
 
+            // Explanation
             VStack(alignment: .leading, spacing: 8) {
                 Text("Your tree grows when you hit your goal")
                     .font(.subheadline.weight(.medium))
@@ -36,6 +38,7 @@ struct SetNetGoalView: View {
             .padding(.horizontal, 24)
             .padding(.top, 20)
 
+            // Input field
             VStack(alignment: .leading, spacing: 6) {
                 Text("Monthly net goal")
                     .font(.caption.weight(.semibold))
@@ -57,7 +60,8 @@ struct SetNetGoalView: View {
             .padding(.horizontal, 24)
             .padding(.top, 28)
 
-            if let _ = Double(netGoalText), Double(netGoalText)! > 0 {
+            // Helper text
+            if let goal = Double(netGoalText), goal > 0 {
                 Text("If you earn 15.000 and spend 13.000, your net is 2.000")
                     .font(.caption)
                     .foregroundStyle(Color(red: 0.3, green: 0.5, blue: 0.33))
@@ -75,6 +79,7 @@ struct SetNetGoalView: View {
 
             Spacer()
 
+            // Continue button
             Button(action: saveGoal) {
                 Group {
                     if isLoading {

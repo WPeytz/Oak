@@ -90,6 +90,7 @@ struct OnboardingFlow: View {
         .environment(\.colorScheme, .light)
     }
 
+    /// Maps the step enum to a 1-based progress number (excluding welcome)
     private var progressStep: Int {
         switch step {
         case .welcome: return 0

@@ -1,24 +1,25 @@
 import SceneKit
 import SwiftUI
 
-// MARK: - 1. Liquid Glass Modifier
+// MARK: - 1. Glass Card UI Component (Dette giver effekten)
 struct LiquidGlassModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
-            .background(.ultraThinMaterial)
-            .overlay(
-                RoundedRectangle(cornerRadius: 32)
-                    .stroke(
-                        LinearGradient(
-                            colors: [.white.opacity(0.4), .white.opacity(0.1)],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ),
-                        lineWidth: 1.5
-                    )
+            .background(
+                ZStack {
+                    // Selve glas-fladen (Semi-transparent hvid)
+                    RoundedRectangle(cornerRadius: 32)
+                        .fill(Color.white.opacity(0.6))
+                    
+                    // Lys-kant (Bezel) i toppen
+                    RoundedRectangle(cornerRadius: 32)
+                        .stroke(Color.white.opacity(0.5), lineWidth: 1.5)
+                        .offset(y: 1)
+                }
             )
+            // Meget blød skygge
+            .shadow(color: Color.black.opacity(0.05), radius: 15, x: 0, y: 10)
             .clipShape(RoundedRectangle(cornerRadius: 32))
-            .shadow(color: Color.black.opacity(0.08), radius: 15, x: 0, y: 10)
     }
 }
 
@@ -28,184 +29,166 @@ extension View {
     }
 }
 
-// MARK: - Clamp helper
-extension Comparable {
-    func clamped(to range: ClosedRange<Self>) -> Self {
-        min(max(self, range.lowerBound), range.upperBound)
-    }
-}
-
 // MARK: - 2. Home View
 struct HomeView: View {
     @EnvironmentObject var appState: AppState
     @State private var dashboard: Dashboard?
     @State private var transactions: [Transaction] = []
     @State private var isLoading = true
+    @State private var isSyncing = false
+    @State private var errorMessage: String?
     @State private var showSettings = false
     @State private var selectedDate: Date = Date()
     @State private var selectedHealthScore: Int?
 
-    enum SheetPosition { case collapsed, expanded }
-    @State private var sheetPosition: SheetPosition = .collapsed
-    @State private var dragOffset: CGFloat = 0
-
-    private let oakBrandGreen = Color(red: 0.2, green: 0.4, blue: 0.2)
-
     var body: some View {
-        ZStack(alignment: .top) {
-            // LAG 1: BAGGRUND
+        ZStack {
+            // Background gradient (RGB: 130, 213, 120)
             LinearGradient(
-                colors: [Color.white, Color(red: 130/255, green: 213/255, blue: 120/255)],
-                startPoint: .top, endPoint: .bottom
-            ).ignoresSafeArea()
+                colors: [
+                    Color.white,
+                    Color(red: 130/255, green: 213/255, blue: 120/255)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                if let dashboard = dashboard {
-                    VoxelTreeView(healthPercentage: CGFloat(displayHealthScore) / 100.0)
-                        .frame(height: 350)
-                        .padding(.top, 60)
-
-                    Text(formattedDate(selectedDate))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .padding(.top, 4)
-
-                    HealthBarView(
-                        healthScore: dashboard.healthScore,
-                        transactions: transactions
-                    ) { date, score in
-                        selectedDate = date
-                        selectedHealthScore = score
-                    }
-                    .padding(.horizontal, 60)
-                }
-                Spacer()
-            }
-
-            // LAG 2: SHEET
-            GeometryReader { proxy in
-                let fullHeight = proxy.size.height
-                let expandedOffset: CGFloat = 80
-                let collapsedOffset = fullHeight - 320
-
-                let baseOffset: CGFloat = sheetPosition == .collapsed ? collapsedOffset : expandedOffset
-                let liveOffset = (baseOffset + dragOffset)
-                    .clamped(to: expandedOffset...(collapsedOffset + 60))
-
-                VStack(spacing: 0) {
-                    Capsule()
-                        .fill(Color.black.opacity(0.1))
-                        .frame(width: 40, height: 5)
-                        .padding(.top, 12)
-                        .padding(.bottom, 8)
-
-                    ScrollView(showsIndicators: false) {
-                        VStack(spacing: 20) {
-                            financialHealthSection
-                            transactionsSection
-                            Color.clear.frame(height: 150)
+            if isLoading {
+                ProgressView()
+            } else if let dashboard {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        // Settings gear
+                        HStack {
+                            Spacer()
+                            Button {
+                                showSettings = true
+                            } label: {
+                                Image(systemName: "gearshape")
+                                    .font(.title3)
+                                    .foregroundStyle(Color(red: 0.2, green: 0.4, blue: 0.2))
+                            }
                         }
-                    }
-                    .scrollDisabled(sheetPosition == .collapsed || dragOffset > 20)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .liquidGlassCard()
-                .padding(.horizontal, 10)
-                .offset(y: liveOffset)
-                .gesture(
-                    DragGesture(minimumDistance: 5)
-                        .onChanged { value in
-                            dragOffset = value.translation.height
-                        }
-                        .onEnded { value in
-                            let velocity = value.velocity.height
-                            let predictedEnd = baseOffset + value.predictedEndTranslation.height
+                        .padding(.horizontal, 24)
+                        .padding(.top, 8)
 
-                            let newPosition: SheetPosition
-                            if velocity < -600 {
-                                newPosition = .expanded
-                            } else if velocity > 600 {
-                                newPosition = .collapsed
+                        // Tree — reflects selected day's health
+                        VoxelTreeView(healthPercentage: CGFloat(displayHealthScore) / 100.0)
+                            .frame(height: 400)
+                            .padding(.top, 20)
+
+                        // Date — reflects selected day
+                        Text(formattedDate(selectedDate))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .padding(.top, 8)
+
+                        // Timeline scroller
+                        HealthBarView(
+                            healthScore: dashboard.healthScore,
+                            transactions: transactions
+                        ) { date, score in
+                            selectedDate = date
+                            selectedHealthScore = score
+                        }
+                        .padding(.horizontal, 60)
+                        .padding(.top, 16)
+
+                        // --- NYT: Financial Health Glass Card ---
+                        HStack {
+                            Text("Financial Health")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(Color(red: 0.2, green: 0.3, blue: 0.2))
+
+                            Spacer()
+
+                            Text("\(displayHealthScore)%")
+                                .font(.title3.weight(.bold))
+                                .foregroundStyle(healthColor)
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 16)
+                        .liquidGlassCard() // HER påføres glasset
+                        .padding(.horizontal, 24)
+                        .padding(.top, 24)
+
+                        // --- NYT: Recent Transactions Glass Card ---
+                        VStack(alignment: .leading, spacing: 0) {
+                            HStack {
+                                Text("Recent Transactions")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(Color(red: 0.2, green: 0.4, blue: 0.2))
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                                    .font(.caption)
+                                    .foregroundStyle(.tertiary)
+                            }
+                            .padding(.horizontal, 24)
+                            .padding(.top, 24)
+                            .padding(.bottom, 12)
+
+                            if transactions.isEmpty {
+                                Text("No transactions yet")
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                                    .padding(24)
                             } else {
-                                let midpoint = (expandedOffset + collapsedOffset) / 2
-                                newPosition = predictedEnd < midpoint ? .expanded : .collapsed
-                            }
-
-                            withAnimation(.spring(response: 0.4, dampingFraction: 0.82, blendDuration: 0)) {
-                                sheetPosition = newPosition
-                                dragOffset = 0
+                                ForEach(transactions.prefix(5)) { txn in
+                                    HomeTransactionRow(transaction: txn)
+                                    
+                                    if txn.id != transactions.prefix(5).last?.id {
+                                        Rectangle()
+                                            .fill(Color.black.opacity(0.05))
+                                            .frame(height: 1)
+                                            .padding(.horizontal, 24)
+                                    }
+                                }
+                                .padding(.bottom, 12)
                             }
                         }
-                )
-            }
-            .ignoresSafeArea(edges: .bottom)
-
-            // LAG 3: NAVIGATION
-            HStack {
-                Spacer()
-                Button { showSettings = true } label: {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(oakBrandGreen)
-                        .padding(12)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.15), radius: 8)
-                }
-            }
-            .padding(.horizontal, 24)
-            .padding(.top, 10)
-        }
-        .task { await loadDashboard() }
-        .sheet(isPresented: $showSettings) {
-            SettingsView()
-        }
-    }
-
-    // MARK: - Sections
-    private var financialHealthSection: some View {
-        HStack {
-            Text("Financial Health")
-                .font(.system(size: 12, weight: .bold))
-                .foregroundStyle(.white)
-                .padding(.horizontal, 12).padding(.vertical, 6)
-                .background(Capsule().fill(oakBrandGreen.opacity(0.8)))
-            Spacer()
-            Text("\(displayHealthScore)%")
-                .font(.system(size: 18, weight: .bold, design: .rounded))
-                .foregroundStyle(oakBrandGreen)
-        }
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: 24).fill(Color.white.opacity(0.35)))
-        .overlay(RoundedRectangle(cornerRadius: 24).stroke(Color.white.opacity(0.5), lineWidth: 1))
-        .padding(.horizontal, 16)
-    }
-
-    private var transactionsSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("Recent Transactions")
-                .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(oakBrandGreen.opacity(0.9))
-                .padding(.horizontal, 20)
-                .padding(.top, 16)
-                .padding(.bottom, 8)
-
-            VStack(spacing: 0) {
-                if transactions.isEmpty {
-                    Text("Ingen transaktioner endnu").font(.caption).foregroundStyle(.secondary).padding(20)
-                } else {
-                    ForEach(transactions.prefix(5)) { txn in
-                        HomeTransactionRow(transaction: txn)
-                        if txn.id != transactions.prefix(5).last?.id {
-                            Divider().padding(.horizontal, 20).opacity(0.2)
-                        }
+                        .liquidGlassCard() // HER påføres glasset
+                        .padding(.horizontal, 24)
+                        .padding(.top, 16)
+                        .padding(.bottom, 100)
                     }
                 }
+                .refreshable {
+                    await syncAndRefresh()
+                }
+            } else if let errorMessage {
+                VStack(spacing: 12) {
+                    Image(systemName: "exclamationmark.triangle")
+                        .font(.largeTitle)
+                        .foregroundStyle(.secondary)
+                    Text(errorMessage)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    Button("Retry") { Task { await loadDashboard() } }
+                }
             }
         }
-        .background(RoundedRectangle(cornerRadius: 28).fill(Color.white.opacity(0.35)))
-        .overlay(RoundedRectangle(cornerRadius: 28).stroke(Color.white.opacity(0.5), lineWidth: 1))
-        .padding(.horizontal, 16)
+        .task {
+            await loadDashboard()
+        }
+        .sheet(isPresented: $showSettings) {
+            NavigationStack {
+                SettingsView()
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("Done") { showSettings = false }
+                        }
+                    }
+            }
+        }
+    }
+
+    private var healthColor: Color {
+        let score = displayHealthScore
+        if score >= 70 { return Color(red: 0.3, green: 0.85, blue: 0.4) }
+        if score >= 40 { return .orange }
+        return .red
     }
 
     private var displayHealthScore: Int {
@@ -226,31 +209,98 @@ struct HomeView: View {
     private func loadDashboard() async {
         guard let userId = appState.userId else { return }
         isLoading = true
+        errorMessage = nil
         do {
-            dashboard = try await APIClient.shared.getDashboard(userId: userId)
-            transactions = try await APIClient.shared.listTransactions(userId: userId)
-        } catch { print(error) }
+            async let d = APIClient.shared.getDashboard(userId: userId)
+            async let t = APIClient.shared.listTransactions(userId: userId)
+            dashboard = try await d
+            transactions = try await t
+        } catch {
+            errorMessage = error.localizedDescription
+        }
         isLoading = false
+    }
+
+    private func syncAndRefresh() async {
+        guard let userId = appState.userId else { return }
+        isSyncing = true
+        do {
+            _ = try await APIClient.shared.syncTransactions(userId: userId)
+            async let d = APIClient.shared.getDashboard(userId: userId)
+            async let t = APIClient.shared.listTransactions(userId: userId)
+            dashboard = try await d
+            transactions = try await t
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isSyncing = false
     }
 }
 
-// MARK: - Row Styling
+// MARK: - Transaction row (home style)
 private struct HomeTransactionRow: View {
     let transaction: Transaction
+
     var body: some View {
-        HStack(spacing: 12) {
-            Circle().fill(Color.white.opacity(0.5)).frame(width: 36, height: 36)
-                .overlay(Image(systemName: "leaf.fill").font(.system(size: 12)).foregroundStyle(.green))
-            VStack(alignment: .leading, spacing: 2) {
-                Text(transaction.merchant ?? "Ukendt").font(.system(size: 14, weight: .semibold))
-                Text("I dag").font(.system(size: 11)).foregroundStyle(.secondary)
-            }
+        HStack(spacing: 14) {
+            Image(systemName: categoryIcon)
+                .font(.body)
+                .foregroundStyle(categoryColor)
+                .frame(width: 32, height: 32)
+
+            Text(transaction.merchant ?? "Unknown")
+                .font(.subheadline)
+                .foregroundStyle(Color.primary.opacity(0.8))
+                .lineLimit(1)
+
             Spacer()
-            let value = NSDecimalNumber(decimal: transaction.amount).doubleValue
-            Text("\(transaction.amount > 0 ? "+" : "")\(String(format: "%.2f", value).replacingOccurrences(of: ".", with: ",")) kr.")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundStyle(transaction.amount > 0 ? .green : .primary)
+
+            Text(amountText)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(transaction.amount > 0 ? Color(red: 0.2, green: 0.65, blue: 0.3) : .primary)
         }
-        .padding(.horizontal, 20).padding(.vertical, 12)
+        .padding(.horizontal, 24)
+        .padding(.vertical, 10)
+    }
+
+    private var categoryIcon: String {
+        guard let cat = transaction.normalizedCategory else { return "circle" }
+        switch cat {
+        case "groceries": return "cart"
+        case "eating_out": return "fork.knife"
+        case "shopping": return "bag"
+        case "transport": return "car"
+        case "housing": return "house"
+        case "utilities": return "bolt"
+        case "subscriptions": return "repeat"
+        case "health": return "heart"
+        case "income": return "arrow.down.circle"
+        case "transfers": return "arrow.left.arrow.right"
+        default: return "circle"
+        }
+    }
+
+    private var categoryColor: Color {
+        guard let cat = transaction.normalizedCategory else { return .gray }
+        switch cat {
+        case "groceries": return Color(red: 0.2, green: 0.65, blue: 0.3)
+        case "eating_out": return .orange
+        case "shopping": return .pink
+        case "transport": return .blue
+        case "income": return Color(red: 0.2, green: 0.65, blue: 0.3)
+        default: return .gray
+        }
+    }
+
+    private var amountText: String {
+        let value = NSDecimalNumber(decimal: transaction.amount).doubleValue
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        formatter.groupingSeparator = "."
+        formatter.decimalSeparator = ","
+        return formatter.string(from: NSNumber(value: value)) ?? String(format: "%.2f", value)
     }
 }
+

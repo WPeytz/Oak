@@ -20,7 +20,7 @@ struct InsightsView: View {
                         .padding(.vertical, 40)
                     }
                 } else {
-                    // Summary (computed from all transactions)
+                    // Summary (computed from all transactions, not dashboard's current-month subset)
                     if !transactions.isEmpty {
                         Section {
                             HStack(spacing: 12) {

@@ -8,7 +8,7 @@ struct OakApp: App {
         WindowGroup {
             Group {
                 if appState.isRestoringSession {
-                    Color.green
+                    Color.white
                         .ignoresSafeArea()
                 } else if appState.hasCompletedOnboarding {
                     ContentView()

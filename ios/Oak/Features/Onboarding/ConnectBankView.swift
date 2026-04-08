@@ -15,11 +15,14 @@ struct ConnectBankView: View {
     @State private var isPolling = false
     @State private var connectionStatus: String?
     @State private var errorMessage: String?
+
+    // CSV import
     @State private var showCSVPicker = false
     @State private var isImporting = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            // Title
             VStack(alignment: .leading, spacing: 4) {
                 Text("Connect Bank")
                     .font(.title.bold())
@@ -31,6 +34,7 @@ struct ConnectBankView: View {
             .padding(.horizontal, 24)
             .padding(.top, 20)
 
+            // Security card
             HStack(spacing: 14) {
                 Image(systemName: "shield.checkered")
                     .font(.title2)
@@ -50,12 +54,14 @@ struct ConnectBankView: View {
             .padding(.horizontal, 24)
             .padding(.top, 20)
 
+            // Bank list
             if isConnecting || isImporting {
                 Spacer()
                 HStack {
                     Spacer()
                     VStack(spacing: 16) {
-                        ProgressView().scaleEffect(1.5)
+                        ProgressView()
+                            .scaleEffect(1.5)
                         Text(isImporting
                              ? "Importing transactions..."
                              : "Connecting to \(selectedInstitution?.name ?? "bank")...")
@@ -70,7 +76,8 @@ struct ConnectBankView: View {
                 HStack {
                     Spacer()
                     VStack(spacing: 16) {
-                        ProgressView().scaleEffect(1.5)
+                        ProgressView()
+                            .scaleEffect(1.5)
                         Text("Waiting for authorization...")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -118,8 +125,10 @@ struct ConnectBankView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                         }
 
+                        // Bank institutions
                         if isLoadingInstitutions {
-                            ProgressView().padding(.vertical, 20)
+                            ProgressView()
+                                .padding(.vertical, 20)
                         } else {
                             ForEach(institutions) { inst in
                                 Button {
@@ -165,6 +174,7 @@ struct ConnectBankView: View {
                     .padding(.top, 8)
             }
 
+            // Skip
             if !isConnecting && !isPolling && !isImporting {
                 Button("Skip for now") {
                     onComplete(0, nil)
@@ -193,6 +203,8 @@ struct ConnectBankView: View {
             Task { await handleCSVImport(result) }
         }
     }
+
+    // MARK: - CSV Import
 
     private func handleCSVImport(_ result: Result<[URL], Error>) async {
         guard case .success(let urls) = result,
@@ -228,6 +240,8 @@ struct ConnectBankView: View {
         }
         isImporting = false
     }
+
+    // MARK: - Bank Connection
 
     private func loadInstitutions() async {
         do {

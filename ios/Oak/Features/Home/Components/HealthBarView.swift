@@ -1,9 +1,9 @@
 import SwiftUI
 
 struct DayHealth: Identifiable {
-    let id: Int
+    let id: Int // index
     let date: Date
-    let healthScore: Int
+    let healthScore: Int // 0-100
 }
 
 struct HealthBarView: View {
@@ -18,6 +18,7 @@ struct HealthBarView: View {
     private let barWidth: CGFloat = 5
     private let spacing: CGFloat = 6
 
+    // Height settings
     private let minBarHeight: CGFloat = 10.0
     private let maxBarHeight: CGFloat = 50.0
 
@@ -27,6 +28,7 @@ struct HealthBarView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(alignment: .center, spacing: spacing) {
+                    // Start spacer
                     Color.clear.frame(width: midX - (barWidth / 2))
 
                     ForEach(dailyHealth) { day in
@@ -53,6 +55,7 @@ struct HealthBarView: View {
                             .id(day.id)
                     }
 
+                    // End spacer
                     Color.clear.frame(width: midX - (barWidth / 2))
                 }
                 .scrollTargetLayout()
@@ -92,18 +95,22 @@ struct HealthBarView: View {
     private func buildDailyHealth() {
         let calendar = Calendar.current
 
+        // Group transactions by day
         let grouped = Dictionary(grouping: transactions) { txn in
             calendar.startOfDay(for: txn.bookedAt)
         }
 
+        // Get date range
         let sortedDates = grouped.keys.sorted()
         guard let firstDate = sortedDates.first,
               let lastDate = sortedDates.last else {
+            // No transactions — show a single bar for today
             dailyHealth = [DayHealth(id: 0, date: Date(), healthScore: healthScore)]
             scrollTarget = 0
             return
         }
 
+        // Build one entry per day from first to last transaction date
         var days: [DayHealth] = []
         var currentDate = firstDate
         var idx = 0
@@ -111,6 +118,7 @@ struct HealthBarView: View {
         var cumulativeSpending: Double = 0
 
         while currentDate <= lastDate {
+            // Add this day's transactions
             if let dayTxns = grouped[currentDate] {
                 for txn in dayTxns {
                     let amount = NSDecimalNumber(decimal: txn.amount).doubleValue
@@ -122,9 +130,11 @@ struct HealthBarView: View {
                 }
             }
 
+            // Calculate health score for this day
             let score: Int
             if cumulativeIncome > 0 {
                 let ratio = cumulativeSpending / cumulativeIncome
+                // ratio 0 = perfect (100), ratio >= 1 = bad (0)
                 score = max(0, min(100, Int((1.0 - ratio) * 100)))
             } else if cumulativeSpending > 0 {
                 score = 0
@@ -137,12 +147,14 @@ struct HealthBarView: View {
             idx += 1
         }
 
+        // Also add today if not included
         let today = calendar.startOfDay(for: Date())
         if let last = days.last, last.date < today {
             days.append(DayHealth(id: idx, date: today, healthScore: days.last?.healthScore ?? healthScore))
         }
 
         dailyHealth = days
+        // Start scrolled to the last day (today)
         scrollTarget = days.count - 1
     }
 }
