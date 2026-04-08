@@ -60,7 +60,7 @@ async def import_csv(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
 ):
-    """Import transactions from a Danske Bank CSV export."""
+    """Import transactions from a Danish bank CSV export (Danske Bank, Nordea)."""
     user_svc = UserService(db)
     user = await user_svc.get_by_id(user_id)
     if not user:

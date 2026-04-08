@@ -6,22 +6,29 @@ struct InsightsView: View {
     @State private var dashboard: Dashboard?
     @State private var isLoading = true
 
+    private let greenText = Color(red: 0.3, green: 0.5, blue: 0.33)
+    private let darkGreen = Color(red: 0.15, green: 0.3, blue: 0.18)
+
     var body: some View {
-        NavigationStack {
-            List {
-                if isLoading {
-                    Section {
-                        HStack {
-                            Spacer()
-                            ProgressView()
-                            Spacer()
-                        }
-                        .padding(.vertical, 40)
-                    }
-                } else {
-                    // Summary (computed from all transactions, not dashboard's current-month subset)
-                    if !transactions.isEmpty {
-                        Section {
+        ZStack {
+            LinearGradient(
+                colors: [
+                    Color(red: 0.85, green: 0.96, blue: 0.87),
+                    Color(red: 0.75, green: 0.92, blue: 0.78),
+                    Color(red: 0.65, green: 0.85, blue: 0.68)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
+
+            if isLoading {
+                ProgressView()
+            } else {
+                ScrollView {
+                    VStack(spacing: 16) {
+                        // Summary pills
+                        if !transactions.isEmpty {
                             HStack(spacing: 12) {
                                 SummaryPill(
                                     label: "Income",
@@ -39,33 +46,45 @@ struct InsightsView: View {
                                     color: totalIncome > totalSpending ? .green : .red
                                 )
                             }
-                            .listRowInsets(EdgeInsets())
-                            .listRowBackground(Color.clear)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 12)
                         }
 
-                    }
+                        // Grouped transactions
+                        let grouped = groupTransactions(transactions)
+                        ForEach(grouped, id: \.date) { group in
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(group.displayDate)
+                                    .font(.subheadline.weight(.medium))
+                                    .foregroundStyle(greenText)
+                                    .padding(.horizontal, 20)
 
-                    // Transactions
-                    let grouped = groupTransactions(transactions)
-                    ForEach(grouped, id: \.date) { group in
-                        Section {
-                            ForEach(group.transactions) { txn in
-                                TransactionRow(transaction: txn)
+                                VStack(spacing: 0) {
+                                    ForEach(Array(group.transactions.enumerated()), id: \.element.id) { index, txn in
+                                        TransactionRow(transaction: txn)
+
+                                        if index < group.transactions.count - 1 {
+                                            Divider()
+                                                .padding(.horizontal, 16)
+                                        }
+                                    }
+                                }
+                                .background(.white.opacity(0.7))
+                                .clipShape(RoundedRectangle(cornerRadius: 16))
+                                .padding(.horizontal, 20)
                             }
-                        } header: {
-                            Text(group.displayDate)
                         }
+
+                        Color.clear.frame(height: 80)
                     }
                 }
             }
-            .listStyle(.insetGrouped)
-            .navigationTitle("Insights")
-            .task {
-                await loadData()
-            }
-            .refreshable {
-                await loadData()
-            }
+        }
+        .task {
+            await loadData()
+        }
+        .refreshable {
+            await loadData()
         }
     }
 
@@ -116,10 +135,8 @@ private struct TransactionGroup {
             return "Today"
         } else if calendar.isDateInYesterday(date) {
             return "Yesterday"
-        } else if calendar.isDate(date, equalTo: Date(), toGranularity: .year) {
-            formatter.dateFormat = "EEEE d MMMM"
         } else {
-            formatter.dateFormat = "d MMMM yyyy"
+            formatter.dateFormat = "EEE d. MMM"
         }
         return formatter.string(from: date)
     }
@@ -136,14 +153,14 @@ private struct SummaryPill: View {
         VStack(spacing: 4) {
             Text(label)
                 .font(.caption)
-                .foregroundStyle(.secondary)
+                .foregroundStyle(Color(red: 0.3, green: 0.5, blue: 0.33))
             Text(value)
                 .font(.subheadline.weight(.semibold))
                 .foregroundStyle(color)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(.white.opacity(0.8))
+        .background(.white.opacity(0.7))
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
@@ -154,85 +171,46 @@ private struct TransactionRow: View {
     let transaction: Transaction
 
     var body: some View {
-        HStack(spacing: 12) {
-            Image(systemName: iconForCategory(transaction.normalizedCategory ?? "other"))
-                .font(.caption)
-                .foregroundStyle(colorForCategory(transaction.normalizedCategory ?? "other"))
-                .frame(width: 28, height: 28)
-                .background(colorForCategory(transaction.normalizedCategory ?? "other").opacity(0.1))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-
-            VStack(alignment: .leading, spacing: 2) {
+        HStack {
+            VStack(alignment: .leading, spacing: 4) {
                 Text(transaction.merchant ?? "Unknown")
-                    .font(.subheadline)
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(Color(red: 0.15, green: 0.3, blue: 0.18))
                     .lineLimit(1)
 
-                Text(displayCategory)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                Text(dateText)
+                    .font(.subheadline)
+                    .foregroundStyle(Color(red: 0.3, green: 0.5, blue: 0.33))
             }
 
             Spacer()
 
             Text(amountText)
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(transaction.amount > 0 ? .green : .primary)
+                .font(.title3.weight(.medium))
+                .foregroundStyle(transaction.amount > 0
+                    ? Color(red: 0.2, green: 0.6, blue: 0.3)
+                    : Color(red: 0.15, green: 0.3, blue: 0.18))
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 
-    private var displayCategory: String {
-        (transaction.normalizedCategory ?? "other")
-            .replacingOccurrences(of: "_", with: " ")
-            .capitalized
+    private var dateText: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "EEE d. MMM"
+        return formatter.string(from: transaction.bookedAt)
     }
 
     private var amountText: String {
         let value = NSDecimalNumber(decimal: transaction.amount).doubleValue
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 0
-        let formatted = formatter.string(from: NSNumber(value: abs(value))) ?? "\(Int(abs(value)))"
-        return value >= 0 ? "+\(formatted) kr" : "-\(formatted) kr"
-    }
-}
-
-// MARK: - Shared helpers
-
-private func iconForCategory(_ cat: String) -> String {
-    switch cat {
-    case "groceries": return "cart"
-    case "eating_out": return "fork.knife"
-    case "shopping": return "bag"
-    case "transport": return "car"
-    case "housing": return "house"
-    case "utilities": return "bolt"
-    case "subscriptions": return "repeat"
-    case "health": return "heart"
-    case "education": return "book"
-    case "entertainment": return "film"
-    case "travel": return "airplane"
-    case "income": return "arrow.down.circle"
-    case "transfers": return "arrow.left.arrow.right"
-    default: return "circle"
-    }
-}
-
-private func colorForCategory(_ cat: String) -> Color {
-    switch cat {
-    case "groceries": return .green
-    case "eating_out": return .orange
-    case "shopping": return .pink
-    case "transport": return .blue
-    case "housing": return .indigo
-    case "utilities": return .yellow
-    case "subscriptions": return .purple
-    case "health": return .red
-    case "education": return .cyan
-    case "entertainment": return .mint
-    case "travel": return .teal
-    case "income": return .green
-    case "transfers": return .teal
-    default: return .gray
+        formatter.minimumFractionDigits = 2
+        formatter.maximumFractionDigits = 2
+        formatter.decimalSeparator = ","
+        formatter.groupingSeparator = "."
+        let formatted = formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+        return formatted
     }
 }
 

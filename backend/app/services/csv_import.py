@@ -1,4 +1,4 @@
-"""Parse Danske Bank CSV exports and import as transactions."""
+"""Parse Danish bank CSV exports (Danske Bank, Nordea) and import as transactions."""
 
 import csv
 import hashlib
@@ -111,17 +111,96 @@ def parse_danske_bank_csv(content: str) -> list[dict]:
     return transactions
 
 
+def _parse_nordea_date(s: str) -> date:
+    """Parse 'dd/mm/yyyy' to date."""
+    parts = s.strip().split("/")
+    return date(int(parts[2]), int(parts[1]), int(parts[0]))
+
+
+def parse_nordea_csv(content: str) -> list[dict]:
+    """Parse a Nordea CSV string into a list of transaction dicts.
+
+    Nordea columns: Bogføringsdato;Beløb;Afsender;Modtager;Navn;Beskrivelse;Saldo;Valuta;Afstemt
+    """
+    content = content.lstrip("\ufeff")
+
+    reader = csv.reader(io.StringIO(content), delimiter=";", quotechar='"')
+
+    header = next(reader, None)
+    if not header:
+        return []
+
+    transactions = []
+    for idx, row in enumerate(reader):
+        if len(row) < 7:
+            continue
+
+        dato = row[0].strip().strip('"')
+        belob = row[1].strip().strip('"')
+        navn = row[4].strip().strip('"')
+        beskrivelse = row[5].strip().strip('"')
+        valuta = row[7].strip().strip('"') if len(row) > 7 else "DKK"
+
+        # Skip reserved (pending) transactions and empty rows
+        if not dato or dato.lower() == "reserveret" or not belob:
+            continue
+
+        try:
+            booked_at = _parse_nordea_date(dato)
+            amount = _parse_danish_amount(belob)
+        except (ValueError, IndexError, ArithmeticError):
+            continue
+
+        # Use beskrivelse as primary description, fall back to navn
+        description = beskrivelse or navn
+        merchant = normalize_merchant(description)
+        cat_result = categorize_transaction(
+            merchant=merchant,
+            raw_description=description,
+            raw_category=None,
+            amount=float(amount),
+        )
+
+        transactions.append({
+            "provider_transaction_id": _generate_transaction_id(dato, description, belob, idx),
+            "booked_at": booked_at,
+            "value_date": booked_at,
+            "amount": amount,
+            "currency": valuta or "DKK",
+            "merchant": merchant,
+            "raw_description": description,
+            "raw_category": None,
+            "normalized_category": cat_result.normalized_category,
+            "is_essential": cat_result.is_essential,
+            "source": "csv",
+        })
+
+    return transactions
+
+
+def _detect_and_parse_csv(content: str) -> list[dict]:
+    """Auto-detect CSV format (Danske Bank vs Nordea) and parse accordingly."""
+    first_line = content.lstrip("\ufeff").split("\n", 1)[0].lower()
+
+    if "bogføringsdato" in first_line or "bogforingsdato" in first_line:
+        return parse_nordea_csv(content)
+
+    # Default to Danske Bank format
+    return parse_danske_bank_csv(content)
+
+
 async def import_csv_transactions(
     db: AsyncSession,
     user_id: uuid.UUID,
     bank_account_id: uuid.UUID,
     csv_content: str,
 ) -> int:
-    """Parse and import transactions from a Danske Bank CSV.
+    """Parse and import transactions from a Danish bank CSV export.
 
+    Auto-detects the bank format (Danske Bank, Nordea).
     Returns the number of new transactions inserted.
     """
-    records = parse_danske_bank_csv(csv_content)
+    records = _detect_and_parse_csv(csv_content)
     txn_svc = TransactionService(db)
     return await txn_svc.bulk_upsert(
         user_id=user_id,

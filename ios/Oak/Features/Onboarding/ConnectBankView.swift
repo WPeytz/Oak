@@ -1,4 +1,3 @@
-import AuthenticationServices
 import SwiftUI
 import UniformTypeIdentifiers
 
@@ -8,15 +7,8 @@ struct ConnectBankView: View {
 
     @State private var institutions: [Institution] = []
     @State private var isLoadingInstitutions = true
-    @State private var isConnecting = false
     @State private var selectedInstitution: Institution?
-    @State private var connectionId: UUID?
-    @State private var authorizationURL: URL?
-    @State private var isPolling = false
-    @State private var connectionStatus: String?
     @State private var errorMessage: String?
-
-    // CSV import
     @State private var showCSVPicker = false
     @State private var isImporting = false
 
@@ -27,7 +19,7 @@ struct ConnectBankView: View {
                 Text("Connect Bank")
                     .font(.title.bold())
                     .foregroundStyle(Color(red: 0.15, green: 0.3, blue: 0.18))
-                Text("Read-only | Secured by MitID")
+                Text("Import your transactions via CSV")
                     .font(.subheadline)
                     .foregroundStyle(Color(red: 0.3, green: 0.5, blue: 0.33))
             }
@@ -54,31 +46,14 @@ struct ConnectBankView: View {
             .padding(.horizontal, 24)
             .padding(.top, 20)
 
-            // Bank list
-            if isConnecting || isImporting {
+            if isImporting {
                 Spacer()
                 HStack {
                     Spacer()
                     VStack(spacing: 16) {
                         ProgressView()
                             .scaleEffect(1.5)
-                        Text(isImporting
-                             ? "Importing transactions..."
-                             : "Connecting to \(selectedInstitution?.name ?? "bank")...")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                }
-                Spacer()
-            } else if isPolling {
-                Spacer()
-                HStack {
-                    Spacer()
-                    VStack(spacing: 16) {
-                        ProgressView()
-                            .scaleEffect(1.5)
-                        Text("Waiting for authorization...")
+                        Text("Importing transactions from \(selectedInstitution?.name ?? "bank")...")
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
@@ -95,44 +70,14 @@ struct ConnectBankView: View {
 
                 ScrollView {
                     VStack(spacing: 8) {
-                        // Upload CSV — highlighted green
-                        Button {
-                            showCSVPicker = true
-                        } label: {
-                            HStack(spacing: 14) {
-                                RoundedRectangle(cornerRadius: 10)
-                                    .fill(Color(red: 0.2, green: 0.5, blue: 0.25))
-                                    .frame(width: 44, height: 44)
-                                    .overlay {
-                                        Image(systemName: "tablecells")
-                                            .font(.body.bold())
-                                            .foregroundStyle(.white)
-                                    }
-
-                                Text("Upload CSV")
-                                    .font(.body.weight(.semibold))
-                                    .foregroundStyle(.white)
-
-                                Spacer()
-
-                                Image(systemName: "chevron.right")
-                                    .font(.caption.bold())
-                                    .foregroundStyle(.white.opacity(0.7))
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 14)
-                            .background(Color(red: 0.2, green: 0.5, blue: 0.25))
-                            .clipShape(RoundedRectangle(cornerRadius: 14))
-                        }
-
-                        // Bank institutions
                         if isLoadingInstitutions {
                             ProgressView()
                                 .padding(.vertical, 20)
                         } else {
                             ForEach(institutions) { inst in
                                 Button {
-                                    selectInstitution(inst)
+                                    selectedInstitution = inst
+                                    showCSVPicker = true
                                 } label: {
                                     HStack(spacing: 14) {
                                         RoundedRectangle(cornerRadius: 10)
@@ -174,8 +119,7 @@ struct ConnectBankView: View {
                     .padding(.top, 8)
             }
 
-            // Skip
-            if !isConnecting && !isPolling && !isImporting {
+            if !isImporting {
                 Button("Skip for now") {
                     onComplete(0, nil)
                 }
@@ -188,12 +132,6 @@ struct ConnectBankView: View {
         }
         .task {
             await loadInstitutions()
-        }
-        .sheet(item: $authorizationURL) { url in
-            BankAuthView(url: url) { callbackURL in
-                authorizationURL = nil
-                handleBankCallback(callbackURL)
-            }
         }
         .fileImporter(
             isPresented: $showCSVPicker,
@@ -241,8 +179,6 @@ struct ConnectBankView: View {
         isImporting = false
     }
 
-    // MARK: - Bank Connection
-
     private func loadInstitutions() async {
         do {
             institutions = try await APIClient.shared.listInstitutions()
@@ -251,85 +187,4 @@ struct ConnectBankView: View {
         }
         isLoadingInstitutions = false
     }
-
-    private func selectInstitution(_ institution: Institution) {
-        selectedInstitution = institution
-        isConnecting = true
-        errorMessage = nil
-
-        Task {
-            do {
-                let connection = try await APIClient.shared.createConnection(
-                    userId: userId,
-                    institutionId: institution.id
-                )
-                connectionId = connection.id
-
-                if connection.status == "linked" {
-                    let syncResult = try? await APIClient.shared.syncTransactions(userId: userId)
-                    onComplete(syncResult?.transactionsSynced ?? 0, nil)
-                } else if let urlString = connection.authorizationUrl,
-                          let url = URL(string: urlString) {
-                    authorizationURL = url
-                } else {
-                    startPolling(connectionId: connection.id)
-                }
-            } catch {
-                errorMessage = error.localizedDescription
-            }
-            isConnecting = false
-        }
-    }
-
-    private func handleBankCallback(_ callbackURL: URL?) {
-        guard let callbackURL,
-              let components = URLComponents(url: callbackURL, resolvingAgainstBaseURL: false) else {
-            if let connectionId { startPolling(connectionId: connectionId) }
-            return
-        }
-
-        let params = Dictionary(
-            uniqueKeysWithValues: (components.queryItems ?? [])
-                .compactMap { item in item.value.map { (item.name, $0) } }
-        )
-
-        if params["status"] == "success" {
-            onComplete(0, nil)
-        } else if params["status"] == "expired" || params["status"] == "revoked" {
-            errorMessage = "Bank connection failed. Please try again."
-        } else {
-            let id = params["connection_id"].flatMap(UUID.init) ?? connectionId ?? UUID()
-            startPolling(connectionId: id)
-        }
-    }
-
-    private func startPolling(connectionId: UUID) {
-        isPolling = true
-        Task {
-            for _ in 0..<30 {
-                do {
-                    let status = try await APIClient.shared.pollConnectionStatus(
-                        userId: userId, connectionId: connectionId
-                    )
-                    connectionStatus = status.status
-                    if status.status == "linked" {
-                        let syncResult = try? await APIClient.shared.syncTransactions(userId: userId)
-                        onComplete(syncResult?.transactionsSynced ?? 0, nil)
-                        return
-                    } else if status.status == "expired" || status.status == "revoked" {
-                        errorMessage = "Connection failed. Please try again."
-                        isPolling = false
-                        return
-                    }
-                } catch {}
-                try? await Task.sleep(for: .seconds(2))
-            }
-            errorMessage = "Connection timed out."
-            isPolling = false
-        }
-    }
-}
-
-extension URL: @retroactive Identifiable {
-    public var id: String { absoluteString }
 }
