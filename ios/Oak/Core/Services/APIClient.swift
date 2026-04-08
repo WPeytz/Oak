@@ -159,6 +159,20 @@ class APIClient {
         )
     }
 
+    
+    // MARK: - Slet mål
+    func deleteSavingsGoal(userId: UUID, goalId: UUID) async throws {
+        try await delete("api/savings-goals/\(userId)/\(goalId)")
+    }
+
+    // Du skal også bruge denne hjælpe-funktion i bunden af klassen sammen med get/post/put
+    private func delete(_ path: String) async throws {
+        var request = URLRequest(url: buildURL(path))
+        request.httpMethod = "DELETE"
+        let (data, response) = try await session.data(for: request)
+        try validateResponse(response, data: data)
+    }
+    
     // MARK: - CSV Import
 
     func importCSV(userId: UUID, csvData: Data, filename: String) async throws -> CSVImportResponse {
