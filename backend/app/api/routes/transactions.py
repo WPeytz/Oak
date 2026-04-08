@@ -3,6 +3,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, UploadFile, File
 from pydantic import BaseModel
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.schemas.transactions import SyncResponse, TransactionResponse
@@ -103,6 +104,15 @@ async def import_csv(
             continue
     else:
         raise HTTPException(status_code=400, detail="Could not decode CSV file")
+
+    # Delete existing CSV transactions so re-import replaces them
+    from app.models.transaction import Transaction
+    await db.execute(
+        delete(Transaction).where(
+            Transaction.user_id == user_id,
+            Transaction.source == "csv",
+        )
+    )
 
     count = await import_csv_transactions(db, user_id, account.id, csv_content)
     await db.commit()

@@ -4,10 +4,7 @@ import UniformTypeIdentifiers
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
     @State private var showGoalEditor = false
-    @State private var showConnectBank = false
     @State private var showCSVPicker = false
-    @State private var isSyncing = false
-    @State private var syncResult: String?
     @State private var isImporting = false
     @State private var importResult: String?
 
@@ -43,34 +40,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Bank") {
-                    Button {
-                        showConnectBank = true
-                    } label: {
-                        HStack {
-                            Label("Connect Bank", systemImage: "building.columns")
-                            Spacer()
-                            Image(systemName: "chevron.right")
-                                .font(.caption)
-                                .foregroundStyle(.tertiary)
-                        }
-                    }
-                }
-
-                Section("Sync") {
-                    Button {
-                        Task { await syncTransactions() }
-                    } label: {
-                        HStack {
-                            Label("Sync Transactions Now", systemImage: "arrow.triangle.2.circlepath")
-                            Spacer()
-                            if isSyncing {
-                                ProgressView()
-                            }
-                        }
-                    }
-                    .disabled(isSyncing)
-
+                Section("Data") {
                     Button {
                         showCSVPicker = true
                     } label: {
@@ -84,11 +54,6 @@ struct SettingsView: View {
                     }
                     .disabled(isImporting)
 
-                    if let syncResult {
-                        Text(syncResult)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
                     if let importResult {
                         Text(importResult)
                             .font(.caption)
@@ -106,20 +71,6 @@ struct SettingsView: View {
                 }
             }
             .navigationTitle("Settings")
-            .sheet(isPresented: $showConnectBank) {
-                NavigationStack {
-                    ConnectBankView(userId: appState.userId ?? UUID()) { _, _ in
-                        showConnectBank = false
-                    }
-                    .navigationTitle("Connect Bank")
-                    .navigationBarTitleDisplayMode(.inline)
-                    .toolbar {
-                        ToolbarItem(placement: .cancellationAction) {
-                            Button("Cancel") { showConnectBank = false }
-                        }
-                    }
-                }
-            }
             .sheet(isPresented: $showGoalEditor) {
                 GoalEditorSheet(
                     userId: appState.userId ?? UUID(),
@@ -179,19 +130,6 @@ struct SettingsView: View {
         }
     }
 
-    private func syncTransactions() async {
-        guard let userId = appState.userId else { return }
-        isSyncing = true
-        syncResult = nil
-
-        do {
-            let result = try await APIClient.shared.syncTransactions(userId: userId)
-            syncResult = "\(result.transactionsSynced) transactions synced"
-        } catch {
-            syncResult = "Sync failed: \(error.localizedDescription)"
-        }
-        isSyncing = false
-    }
 }
 
 // MARK: - Goal editor sheet
