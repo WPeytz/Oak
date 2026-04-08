@@ -5,7 +5,6 @@ struct InsightsView: View {
     @State private var transactions: [Transaction] = []
     @State private var dashboard: Dashboard?
     @State private var isLoading = true
-    @State private var selectedCategory: String?
 
     var body: some View {
         NavigationStack {
@@ -44,62 +43,23 @@ struct InsightsView: View {
                             .listRowBackground(Color.clear)
                         }
 
-                        // Tappable category breakdown
-                        if let categories = dashboard?.topCategories, !categories.isEmpty {
-                            Section("Categories") {
-                                ForEach(categories) { category in
-                                    CategoryTapRow(
-                                        category: category,
-                                        maxTotal: categories.first?.total ?? 1,
-                                        isSelected: selectedCategory == category.category
-                                    )
-                                    .contentShape(Rectangle())
-                                    .onTapGesture {
-                                        withAnimation {
-                                            if selectedCategory == category.category {
-                                                selectedCategory = nil
-                                            } else {
-                                                selectedCategory = category.category
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
 
-                    // Transactions — filtered by selected category or show all
-                    let displayed = filteredTransactions
-                    if !displayed.isEmpty {
-                        let grouped = groupTransactions(displayed)
-                        ForEach(grouped, id: \.date) { group in
-                            Section {
-                                ForEach(group.transactions) { txn in
-                                    TransactionRow(transaction: txn)
-                                }
-                            } header: {
-                                Text(group.displayDate)
-                            }
-                        }
-                    } else if selectedCategory != nil {
+                    // Transactions
+                    let grouped = groupTransactions(transactions)
+                    ForEach(grouped, id: \.date) { group in
                         Section {
-                            Text("No transactions in this category")
-                                .foregroundStyle(.secondary)
+                            ForEach(group.transactions) { txn in
+                                TransactionRow(transaction: txn)
+                            }
+                        } header: {
+                            Text(group.displayDate)
                         }
                     }
                 }
             }
             .listStyle(.insetGrouped)
             .navigationTitle("Insights")
-            .toolbar {
-                if selectedCategory != nil {
-                    ToolbarItem(placement: .topBarTrailing) {
-                        Button("Show All") {
-                            withAnimation { selectedCategory = nil }
-                        }
-                    }
-                }
-            }
             .task {
                 await loadData()
             }
@@ -121,11 +81,6 @@ struct InsightsView: View {
             let val = NSDecimalNumber(decimal: txn.amount).doubleValue
             return val < 0 ? sum + abs(val) : sum
         }
-    }
-
-    private var filteredTransactions: [Transaction] {
-        guard let cat = selectedCategory else { return transactions }
-        return transactions.filter { $0.normalizedCategory == cat }
     }
 
     private func groupTransactions(_ txns: [Transaction]) -> [TransactionGroup] {
@@ -167,61 +122,6 @@ private struct TransactionGroup {
             formatter.dateFormat = "d MMMM yyyy"
         }
         return formatter.string(from: date)
-    }
-}
-
-// MARK: - Category row (tappable)
-
-private struct CategoryTapRow: View {
-    let category: CategoryBreakdown
-    let maxTotal: Double
-    let isSelected: Bool
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Image(systemName: iconForCategory(category.category))
-                    .font(.caption)
-                    .foregroundStyle(colorForCategory(category.category))
-                    .frame(width: 24)
-
-                Text(category.displayName)
-                    .font(.subheadline)
-
-                if category.isEssential {
-                    Text("Essential")
-                        .font(.system(size: 9, weight: .medium))
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(.blue.opacity(0.1))
-                        .foregroundStyle(.blue)
-                        .clipShape(Capsule())
-                }
-
-                Spacer()
-
-                Text(formatDKK(category.total))
-                    .font(.subheadline.weight(.medium))
-
-                Text("(\(category.count))")
-                    .font(.caption)
-                    .foregroundStyle(.tertiary)
-
-                Image(systemName: isSelected ? "chevron.down" : "chevron.right")
-                    .font(.caption2)
-                    .foregroundStyle(.tertiary)
-            }
-
-            // Bar
-            GeometryReader { geo in
-                RoundedRectangle(cornerRadius: 3)
-                    .fill(colorForCategory(category.category).opacity(isSelected ? 0.8 : 0.5))
-                    .frame(width: max(4, geo.size.width * category.total / maxTotal))
-            }
-            .frame(height: 5)
-        }
-        .padding(.vertical, 4)
-        .background(isSelected ? colorForCategory(category.category).opacity(0.05) : Color.clear)
     }
 }
 
