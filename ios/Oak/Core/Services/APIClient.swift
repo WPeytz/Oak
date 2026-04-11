@@ -265,3 +265,4 @@ private struct ErrorDetail: Decodable {
 }
 
 private struct EmptyBody: Encodable {}
+

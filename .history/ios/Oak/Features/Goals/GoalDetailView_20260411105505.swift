@@ -36,7 +36,7 @@ struct GoalDetailScreen: View {
                     .frame(height: 380)
                     .padding(.top, 40)
                 
-                Color.clear.frame(height: 12)
+                Spacer()
             }
 
             // LAYER 3: INTERACTIVE BOTTOM SHEET (Liquid Glass)
@@ -272,7 +272,7 @@ struct AddSavingsSheet: View {
                         rawDigits = ""
                     }
                     keypadButton(title: "0") { appendDigit("0") }
-                    keypadButton(title: "", systemName: "delete.left.fill", isAccent: false) {
+                    keypadButton(title: "<-", isAccent: false) {
                         _ = rawDigits.popLast()
                     }
                 }
@@ -305,7 +305,7 @@ struct AddSavingsSheet: View {
                 .disabled(amount <= 0 || isSaving)
                 .opacity((amount <= 0 || isSaving) ? 0.5 : 1)
             }
-            .padding(30)
+            .padding(20)
             .navigationTitle("Add Savings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -318,22 +318,15 @@ struct AddSavingsSheet: View {
     }
 
     @ViewBuilder
-    private func keypadButton(title: String, systemName: String? = nil, isAccent: Bool = true, action: @escaping () -> Void) -> some View {
+    private func keypadButton(title: String, isAccent: Bool = true, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Group {
-                if let systemName {
-                    Image(systemName: systemName)
-                        .font(.system(size: 22, weight: .semibold))
-                } else {
-                    Text(title)
-                        .font(.title2.weight(.semibold))
-                }
-            }
-            .foregroundStyle(isAccent ? Color.primary : Color.secondary)
-            .frame(maxWidth: .infinity)
-            .frame(height: 64)
-            .background(Color.black.opacity(0.05))
-            .clipShape(RoundedRectangle(cornerRadius: 14))
+            Text(title)
+                .font(.title2.weight(.semibold))
+                .foregroundStyle(isAccent ? Color.primary : Color.secondary)
+                .frame(maxWidth: .infinity)
+                .frame(height: 64)
+                .background(Color.black.opacity(0.05))
+                .clipShape(RoundedRectangle(cornerRadius: 14))
         }
         .buttonStyle(.plain)
     }

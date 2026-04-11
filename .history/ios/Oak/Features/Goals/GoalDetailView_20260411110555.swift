@@ -36,7 +36,7 @@ struct GoalDetailScreen: View {
                     .frame(height: 380)
                     .padding(.top, 40)
                 
-                Color.clear.frame(height: 12)
+                Spacer()
             }
 
             // LAYER 3: INTERACTIVE BOTTOM SHEET (Liquid Glass)
@@ -305,7 +305,7 @@ struct AddSavingsSheet: View {
                 .disabled(amount <= 0 || isSaving)
                 .opacity((amount <= 0 || isSaving) ? 0.5 : 1)
             }
-            .padding(30)
+            .padding(20)
             .navigationTitle("Add Savings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
