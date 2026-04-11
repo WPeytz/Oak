@@ -36,7 +36,7 @@ struct GoalDetailScreen: View {
                     .frame(height: 380)
                     .padding(.top, 40)
                 
-                Color.clear.frame(height: 12)
+                Spacer()
             }
 
             // LAYER 3: INTERACTIVE BOTTOM SHEET (Liquid Glass)
@@ -78,22 +78,6 @@ struct GoalDetailScreen: View {
                             .liquidGlassCard()
                             .padding(.horizontal, 16)
 
-                            // 2. Add Savings Button
-                            Button(action: { showAddSavings = true }) {
-                                HStack {
-                                    Image(systemName: "plus.circle.fill")
-                                    Text("Add savings")
-                                }
-                                .font(.headline)
-                                .foregroundColor(.white)
-                                .frame(maxWidth: .infinity)
-                                .padding(.vertical, 18)
-                                .background(oakBrandGreen)
-                                .clipShape(RoundedRectangle(cornerRadius: 20))
-                                .shadow(color: oakBrandGreen.opacity(0.3), radius: 10, y: 5)
-                            }
-                            .padding(.horizontal, 16)
-
                             // 3. Progress Details Card
                             VStack(spacing: 15) {
                                 // Progress Bar
@@ -129,10 +113,27 @@ struct GoalDetailScreen: View {
                             .liquidGlassCard()
                             .padding(.horizontal, 16)
                             
-                            Color.clear.frame(height: 150)
+                            Color.clear.frame(height: 24)
                         }
                     }
                     .scrollDisabled(sheetPosition == .collapsed || dragOffset > 0)
+
+                    Button(action: { showAddSavings = true }) {
+                        HStack {
+                            Image(systemName: "plus.circle.fill")
+                            Text("Add savings")
+                        }
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 18)
+                        .background(oakBrandGreen)
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                        .shadow(color: oakBrandGreen.opacity(0.3), radius: 10, y: 5)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 24)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(.ultraThinMaterial)
@@ -305,7 +306,7 @@ struct AddSavingsSheet: View {
                 .disabled(amount <= 0 || isSaving)
                 .opacity((amount <= 0 || isSaving) ? 0.5 : 1)
             }
-            .padding(30)
+            .padding(20)
             .navigationTitle("Add Savings")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

@@ -33,11 +33,17 @@ struct GoalsView: View {
                                     // 2. Dit flotte kort (vises ovenpå)
                                     GoalCardView(index: index + 1, goal: goal)
                                 }
+                                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                                    Button(role: .destructive) {
+                                        deleteGoal(id: goal.id)
+                                    } label: {
+                                        Label("Delete", systemImage: "trash")
+                                    }
+                                }
                                 .listRowBackground(Color.clear)
                                 .listRowSeparator(.hidden)
                                 .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
                             }
-                            .onDelete(perform: deleteGoal)
                         } header: {
                             headerView
                                 .padding(.bottom, 20)
@@ -93,18 +99,14 @@ struct GoalsView: View {
         isLoading = false
     }
 
-    private func deleteGoal(at offsets: IndexSet) {
+    private func deleteGoal(id: UUID) {
         guard let userId = appState.userId else { return }
-        
-        offsets.forEach { index in
-            let goalId = goals[index].id
-            Task {
-                // Vi kalder API'et. Hvis din APIClient ikke har deleteSavingsGoal endnu,
-                // vil denne linje fejle - se forklaring under koden.
-                try? await APIClient.shared.deleteSavingsGoal(userId: userId, goalId: goalId)
-            }
+
+        goals.removeAll { $0.id == id }
+
+        Task {
+            try? await APIClient.shared.deleteSavingsGoal(userId: userId, goalId: id)
         }
-        goals.remove(atOffsets: offsets)
     }
 
     private var emptyState: some View {

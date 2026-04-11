@@ -7,11 +7,9 @@ struct LiquidGlassModifier: ViewModifier {
         content
             .background(
                 ZStack {
-                    // Semi-transparent base
                     RoundedRectangle(cornerRadius: 32)
                         .fill(Color.white.opacity(0.6))
                     
-                    // Subtle top bezel
                     RoundedRectangle(cornerRadius: 32)
                         .stroke(Color.white.opacity(0.5), lineWidth: 1.5)
                         .offset(y: 1)
@@ -36,11 +34,10 @@ struct HomeView: View {
     @State private var isLoading = true
     @State private var showSettings = false
     
-    // Time Travel State
     @State private var selectedDate: Date = Date()
     @State private var selectedHealthScore: Int?
     
-    // Bottom Sheet Physics State
+    // Bottom Sheet Physics State (Synkroniseret med GoalDetailView)
     enum SheetPosition { case collapsed, expanded }
     @State private var sheetPosition: SheetPosition = .collapsed
     @State private var dragOffset: CGFloat = 0
@@ -70,11 +67,11 @@ struct HomeView: View {
                 Spacer()
             }
 
-            // LAYER 3: INTERACTIVE BOTTOM SHEET
+            // LAYER 3: INTERACTIVE BOTTOM SHEET (Liquid Glass)
             GeometryReader { proxy in
                 let fullHeight = proxy.size.height
                 let expandedOffset: CGFloat = 100
-                let collapsedOffset = fullHeight - 340
+                let collapsedOffset = fullHeight - 340 // Matcher din Goal-view højde
                 
                 let baseOffset = (sheetPosition == .expanded) ? expandedOffset : collapsedOffset
                 let currentOffset = baseOffset + dragOffset
@@ -89,8 +86,6 @@ struct HomeView: View {
 
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 20) {
-                            
-                            // 1. Timeline Scroller (Explicit height ensures it shows up)
                             if let dashboard = dashboard {
                                 HealthBarView(
                                     healthScore: dashboard.healthScore,
@@ -104,7 +99,7 @@ struct HomeView: View {
                                 .padding(.top, 5)
                             }
                             
-                            // 2. Financial Health Card
+                            // 1. Financial Health Card
                             HStack {
                                 Text("Financial Health")
                                     .font(.subheadline.weight(.medium))
@@ -118,7 +113,7 @@ struct HomeView: View {
                             .liquidGlassCard()
                             .padding(.horizontal, 16)
 
-                            // 3. Recent Transactions Card
+                            // 2. Recent Transactions Card
                             VStack(alignment: .leading, spacing: 0) {
                                 Text("Recent Transactions")
                                     .font(.subheadline.weight(.bold))
@@ -144,10 +139,11 @@ struct HomeView: View {
                             .liquidGlassCard()
                             .padding(.horizontal, 16)
                             
-                            // Extra space to ensure user can scroll past the bottom
+                            // Bund-padding så alt kan ses over kanten
                             Color.clear.frame(height: 150)
                         }
                     }
+                    // Låser scroll når sheetet er i bund eller trækkes ned
                     .scrollDisabled(sheetPosition == .collapsed || dragOffset > 0)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -162,12 +158,8 @@ struct HomeView: View {
                     DragGesture()
                         .onChanged { value in
                             let translation = value.translation.height
-                            // Apply Rubber-banding if pulling above expansion point
-                            if sheetPosition == .expanded && translation < 0 {
-                                dragOffset = translation * 0.3
-                            } else {
-                                dragOffset = translation
-                            }
+                            // Tilføjer modstand (rubber-banding) ved top-stop
+                            dragOffset = (sheetPosition == .expanded && translation < 0) ? translation * 0.3 : translation
                         }
                         .onEnded { value in
                             let velocity = value.velocity.height
@@ -175,7 +167,7 @@ struct HomeView: View {
                             let midpoint = (expandedOffset + collapsedOffset) / 2
                             
                             let target: SheetPosition
-                            // High velocity flick overrides midpoint logic
+                            // Snappy hastigheds-logik (Matcher GoalDetailView)
                             if velocity < -500 {
                                 target = .expanded
                             } else if velocity > 500 {
@@ -184,7 +176,6 @@ struct HomeView: View {
                                 target = predictedEnd < midpoint ? .expanded : .collapsed
                             }
 
-                            // Smooth Apple-style spring animation
                             withAnimation(.spring(response: 0.4, dampingFraction: 0.82, blendDuration: 0)) {
                                 sheetPosition = target
                                 dragOffset = 0
@@ -216,7 +207,7 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Computed Properties & Helpers
+    // MARK: - Helpers
     private var displayHealthScore: Int {
         selectedHealthScore ?? dashboard?.healthScore ?? 50
     }
@@ -288,4 +279,3 @@ private struct HomeTransactionRow: View {
         .padding(.vertical, 12)
     }
 }
-
