@@ -26,26 +26,6 @@ struct ConnectBankView: View {
             .padding(.horizontal, 24)
             .padding(.top, 20)
 
-            // Security card
-            HStack(spacing: 14) {
-                Image(systemName: "shield.checkered")
-                    .font(.title2)
-                    .foregroundStyle(Color(red: 0.2, green: 0.5, blue: 0.25))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    (Text("Oak ").font(.subheadline) +
-                     Text("never sees").font(.subheadline).bold() +
-                     Text(" your login credentials. Your banks handles all ").font(.subheadline) +
-                     Text("authentication.").font(.subheadline).bold())
-                    .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.22))
-                }
-            }
-            .padding(16)
-            .background(.white.opacity(0.7))
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-            .padding(.horizontal, 24)
-            .padding(.top, 20)
-
             if isImporting {
                 Spacer()
                 HStack {

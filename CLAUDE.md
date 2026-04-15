@@ -15,7 +15,7 @@ Oak is a personal finance iOS app with a FastAPI backend. It visualizes financia
 - `backend/` — FastAPI (Python 3.12)
   - `app/main.py` — FastAPI entry point
   - `app/config.py` — pydantic-settings configuration
-  - `app/api/routes/` — route modules by domainAc
+  - `app/api/routes/` — route modules by domain
   - `app/models/` — SQLAlchemy ORM models (async, PostgreSQL)
   - `app/services/` — domain services with abstract base + concrete impl
   - `app/providers/tink/` — Tink Open Banking provider layer

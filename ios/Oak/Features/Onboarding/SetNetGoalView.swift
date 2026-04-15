@@ -104,8 +104,7 @@ struct SetNetGoalView: View {
     }
 
     private var isValid: Bool {
-        guard let goal = Double(netGoalText), goal != 0 else { return false }
-        return true
+        Double(netGoalText) != nil
     }
 
     private func saveGoal() {

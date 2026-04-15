@@ -34,9 +34,9 @@ SANDBOX_INSTITUTIONS = [
         countries=["DK"],
     ),
     Institution(
-        id="dk-jyskebank-open-banking",
-        name="Jyske Bank",
-        logo_url="https://cdn.tink.se/provider-images/dk-jyskebank.png",
+        id="dk-lsb-open-banking",
+        name="Lån og Spar Bank",
+        logo_url="https://cdn.tink.se/provider-images/dk-lsb.png",
         countries=["DK"],
     ),
 ]
