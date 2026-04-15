@@ -36,7 +36,12 @@ struct HomeView: View {
     
     @State private var selectedDate: Date = Date()
     @State private var selectedHealthScore: Int?
-    
+
+    // Timeline playback
+    @State private var isPlaying = false
+    @State private var playbackTask: Task<Void, Never>?
+    @State private var timelineScrollTarget: Int?
+
     // Bottom Sheet Physics State (Synkroniseret med GoalDetailView)
     enum SheetPosition { case collapsed, expanded }
     @State private var sheetPosition: SheetPosition = .collapsed
@@ -52,17 +57,30 @@ struct HomeView: View {
                 startPoint: .top, endPoint: .bottom
             ).ignoresSafeArea()
 
-            // LAYER 2: BACKGROUND TREE & DATE
+            // LAYER 2: BACKGROUND TREE, DATE & TIMELINE
             VStack(spacing: 0) {
-                if let _ = dashboard {
+                if let dashboard = dashboard {
                     VoxelTreeView(healthPercentage: CGFloat(displayHealthScore) / 100.0)
-                        .frame(height: 380)
-                        .padding(.top, 40)
-                    
+                        .frame(height: 340)
+                        .padding(.top, 20)
+
                     Text(formattedDate(selectedDate))
                         .font(.system(size: 14, weight: .medium, design: .rounded))
                         .foregroundStyle(oakBrandGreen.opacity(0.7))
                         .padding(.top, -20)
+
+                    HealthBarView(
+                        healthScore: dashboard.healthScore,
+                        transactions: transactions,
+                        onDateSelected: { date, score in
+                            selectedDate = date
+                            selectedHealthScore = score
+                        },
+                        scrollTarget: $timelineScrollTarget
+                    )
+                    .frame(height: 80)
+                    .padding(.horizontal, 20)
+                    .padding(.top, 8)
                 }
                 Spacer()
             }
@@ -108,19 +126,6 @@ struct HomeView: View {
 
                     ScrollView(showsIndicators: false) {
                         VStack(spacing: 20) {
-                            if let dashboard = dashboard {
-                                HealthBarView(
-                                    healthScore: dashboard.healthScore,
-                                    transactions: transactions
-                                ) { date, score in
-                                    selectedDate = date
-                                    selectedHealthScore = score
-                                }
-                                .frame(height: 80)
-                                .padding(.horizontal, 20)
-                                .padding(.top, 5)
-                            }
-                            
                             // 1. Financial Health Card
                             HStack {
                                 Text("Financial Health")
@@ -183,14 +188,28 @@ struct HomeView: View {
             // LAYER 4: TOP UI ELEMENTS
             HStack {
                 Spacer()
-                Button { showSettings = true } label: {
-                    Image(systemName: "gearshape.fill")
-                        .font(.system(size: 18))
-                        .foregroundStyle(oakBrandGreen)
-                        .padding(12)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
-                        .shadow(color: .black.opacity(0.1), radius: 5)
+                VStack(spacing: 12) {
+                    Button { showSettings = true } label: {
+                        Image(systemName: "gearshape.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(oakBrandGreen)
+                            .padding(12)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.1), radius: 5)
+                    }
+
+                    Button { togglePlayback() } label: {
+                        Image(systemName: isPlaying ? "stop.fill" : "play.fill")
+                            .font(.system(size: 18))
+                            .foregroundStyle(oakBrandGreen)
+                            .padding(12)
+                            .background(.ultraThinMaterial)
+                            .clipShape(Circle())
+                            .shadow(color: .black.opacity(0.1), radius: 5)
+                    }
+                    .disabled(transactions.isEmpty)
+                    .opacity(transactions.isEmpty ? 0.4 : 1.0)
                 }
             }
             .padding(.horizontal, 24)
@@ -223,6 +242,34 @@ struct HomeView: View {
             f.dateFormat = "EEE d. MMM"
         }
         return f.string(from: date)
+    }
+
+    private func togglePlayback() {
+        if isPlaying {
+            playbackTask?.cancel()
+            playbackTask = nil
+            isPlaying = false
+            return
+        }
+
+        let fallback = dashboard?.healthScore ?? 50
+        let days = computeDailyHealth(transactions: transactions, fallbackScore: fallback)
+        guard days.count > 1 else { return }
+
+        isPlaying = true
+        playbackTask = Task { @MainActor in
+            for day in days {
+                if Task.isCancelled { break }
+                withAnimation(.easeInOut(duration: 0.25)) {
+                    selectedDate = day.date
+                    selectedHealthScore = day.healthScore
+                }
+                timelineScrollTarget = day.id
+                try? await Task.sleep(nanoseconds: 350_000_000)
+            }
+            isPlaying = false
+            playbackTask = nil
+        }
     }
 
     private func loadDashboard() async {
