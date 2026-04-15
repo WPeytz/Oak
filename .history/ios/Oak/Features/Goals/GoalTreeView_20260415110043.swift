@@ -10,5 +10,6 @@ struct GoalTreeView: View {
 
     var body: some View {
         VoxelTreeView(healthPercentage: healthPercentage)
+            .allowsHitTesting(false)
     }
 }

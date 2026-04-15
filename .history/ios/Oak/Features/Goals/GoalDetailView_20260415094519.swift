@@ -16,10 +16,6 @@ struct GoalDetailScreen: View {
     
     private let oakBrandGreen = Color(red: 0.2, green: 0.4, blue: 0.2)
 
-    private var remainingAmount: Double {
-        max(currentGoal.targetAmount - currentGoal.currentAmount, 0)
-    }
-
     init(goal: SavingsGoal) {
         self.goal = goal
         _currentGoal = State(initialValue: goal)
@@ -97,8 +93,6 @@ struct GoalDetailScreen: View {
                                 .shadow(color: oakBrandGreen.opacity(0.3), radius: 10, y: 5)
                             }
                             .padding(.horizontal, 16)
-                            .disabled(remainingAmount <= 0)
-                            .opacity(remainingAmount <= 0 ? 0.5 : 1)
 
                             // 3. Progress Details Card
                             VStack(spacing: 15) {
@@ -182,7 +176,7 @@ struct GoalDetailScreen: View {
         .sheet(isPresented: $showAddSavings) {
             AddSavingsSheet(
                 goalName: currentGoal.name,
-                remainingAmount: remainingAmount
+                remainingAmount: max(currentGoal.targetAmount - currentGoal.currentAmount, 0)
             ) { amount in
                 await addSavings(amount)
             }
@@ -191,10 +185,7 @@ struct GoalDetailScreen: View {
 
     private func addSavings(_ amount: Double) async {
         guard amount > 0, let userId = appState.userId else { return }
-        let clampedAmount = min(amount, remainingAmount)
-        guard clampedAmount > 0 else { return }
-
-        let newAmount = currentGoal.currentAmount + clampedAmount
+        let newAmount = currentGoal.currentAmount + amount
 
         do {
             let updated = try await APIClient.shared.updateSavingsGoal(
@@ -245,10 +236,6 @@ struct AddSavingsSheet: View {
         (Double(rawDigits) ?? 0) / 100
     }
 
-    private var clampedAmount: Double {
-        min(amount, remainingAmount)
-    }
-
     private var displayAmount: String {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
@@ -256,7 +243,7 @@ struct AddSavingsSheet: View {
         formatter.maximumFractionDigits = 2
         formatter.groupingSeparator = "."
         formatter.decimalSeparator = ","
-        return (formatter.string(from: NSNumber(value: clampedAmount)) ?? "0,00") + " kr."
+        return (formatter.string(from: NSNumber(value: amount)) ?? "0,00") + " kr."
     }
 
     var body: some View {
@@ -295,7 +282,7 @@ struct AddSavingsSheet: View {
                 Button {
                     Task {
                         isSaving = true
-                        await onSave(clampedAmount)
+                        await onSave(amount)
                         isSaving = false
                         dismiss()
                     }
@@ -315,8 +302,8 @@ struct AddSavingsSheet: View {
                     .background(Color(red: 0.2, green: 0.4, blue: 0.2))
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                 }
-                .disabled(clampedAmount <= 0 || isSaving)
-                .opacity((clampedAmount <= 0 || isSaving) ? 0.5 : 1)
+                .disabled(amount <= 0 || isSaving)
+                .opacity((amount <= 0 || isSaving) ? 0.5 : 1)
             }
             .padding(30)
             .navigationTitle("Add Savings")
