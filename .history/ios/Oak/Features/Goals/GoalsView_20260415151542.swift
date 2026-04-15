@@ -170,7 +170,7 @@ struct GoalCardView: View {
             Image(systemName: "chevron.right")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(figmaDarkGreen.opacity(0.35))
-                .padding(.trailing, 18)
+                .padding(.trailing, 20)
         }
         .padding(.horizontal, 24)
         .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
