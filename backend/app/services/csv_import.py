@@ -3,6 +3,7 @@
 import csv
 import hashlib
 import io
+import logging
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -11,6 +12,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.services.categorization import categorize_transaction, normalize_merchant
 from app.services.transaction_service import TransactionService
+
+log = logging.getLogger(__name__)
 
 
 # Danske Bank CSV category → Oak category mapping
@@ -189,13 +192,10 @@ def parse_lsb_csv(content: str) -> list[dict]:
 
     Columns: Dato;Tekst;Beløb;Saldo
     Date format: dd-mm-yyyy. Amount: Danish decimal (e.g. -450,50).
+    Skips any preamble rows before the data starts.
     """
     content = content.lstrip("\ufeff")
     reader = csv.reader(io.StringIO(content), delimiter=";", quotechar='"')
-
-    header = next(reader, None)
-    if not header:
-        return []
 
     transactions = []
     for idx, row in enumerate(reader):
@@ -213,6 +213,7 @@ def parse_lsb_csv(content: str) -> list[dict]:
             booked_at = _parse_lsb_date(dato)
             amount = _parse_danish_amount(belob)
         except (ValueError, IndexError, ArithmeticError):
+            # Header or preamble row — skip until we hit a valid data row
             continue
 
         merchant = normalize_merchant(tekst)
@@ -242,16 +243,18 @@ def parse_lsb_csv(content: str) -> list[dict]:
 
 def _detect_and_parse_csv(content: str) -> list[dict]:
     """Auto-detect CSV format (Danske Bank, Nordea, Lån og Spar) and parse accordingly."""
-    first_line = content.lstrip("\ufeff").split("\n", 1)[0].lower()
+    head = content.lstrip("\ufeff")[:2000].lower()
 
-    if "bogføringsdato" in first_line or "bogforingsdato" in first_line:
+    if "bogføringsdato" in head or "bogforingsdato" in head:
+        log.info("csv_import: detected Nordea format")
         return parse_nordea_csv(content)
 
-    # Lån og Spar: Dato;Tekst;Beløb;Saldo
-    if "tekst" in first_line and "saldo" in first_line:
+    # Lån og Spar: Dato;Tekst;Beløb;Saldo — look anywhere in the preamble
+    if "tekst" in head and "saldo" in head and "kategori" not in head:
+        log.info("csv_import: detected Lån og Spar format")
         return parse_lsb_csv(content)
 
-    # Default to Danske Bank format
+    log.info("csv_import: defaulting to Danske Bank format")
     return parse_danske_bank_csv(content)
 
 
@@ -267,6 +270,7 @@ async def import_csv_transactions(
     Returns the number of new transactions inserted.
     """
     records = _detect_and_parse_csv(csv_content)
+    log.info("csv_import: parsed %d records for user %s", len(records), user_id)
     txn_svc = TransactionService(db)
     return await txn_svc.bulk_upsert(
         user_id=user_id,
