@@ -61,12 +61,20 @@ struct ConnectBankView: View {
                                 } label: {
                                     HStack(spacing: 14) {
                                         RoundedRectangle(cornerRadius: 10)
-                                            .fill(Color(red: 0.2, green: 0.35, blue: 0.5).opacity(0.15))
+                                            .fill(Color.white)
                                             .frame(width: 44, height: 44)
                                             .overlay {
-                                                Text(String(inst.name.prefix(2)))
-                                                    .font(.caption.bold())
-                                                    .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.5))
+                                                if let assetName = bankAsset(for: inst.id),
+                                                   let img = UIImage(named: assetName) {
+                                                    Image(uiImage: img)
+                                                        .resizable()
+                                                        .aspectRatio(contentMode: .fit)
+                                                        .padding(6)
+                                                } else {
+                                                    Text(String(inst.name.prefix(2)))
+                                                        .font(.caption.bold())
+                                                        .foregroundStyle(Color(red: 0.2, green: 0.35, blue: 0.5))
+                                                }
                                             }
 
                                         Text(inst.name)
@@ -157,6 +165,19 @@ struct ConnectBankView: View {
             errorMessage = "Import failed: \(error.localizedDescription)"
         }
         isImporting = false
+    }
+
+    private func bankAsset(for institutionId: String) -> String? {
+        switch institutionId {
+        case "dk-danskebank-business", "dk-danskebank", "dk-danskebank-open-banking":
+            return "bank-danske"
+        case "dk-nordea-open-banking":
+            return "bank-nordea"
+        case "dk-lsb-open-banking":
+            return "bank-lsb"
+        default:
+            return nil
+        }
     }
 
     private func loadInstitutions() async {
