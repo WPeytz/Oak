@@ -79,52 +79,44 @@ struct HealthBarView: View {
         GeometryReader { container in
             let midX = container.size.width / 2
 
-            ScrollViewReader { proxy in
-                ScrollView(.horizontal, showsIndicators: false) {
-                    LazyHStack(alignment: .center, spacing: spacing) {
-                        // Start spacer
-                        Color.clear.frame(width: midX - (barWidth / 2))
+            ScrollView(.horizontal, showsIndicators: false) {
+                LazyHStack(alignment: .center, spacing: spacing) {
+                    // Start spacer
+                    Color.clear.frame(width: midX - (barWidth / 2))
 
-                        ForEach(dailyHealth) { day in
-                            let normalizedHeight = minBarHeight + (maxBarHeight - minBarHeight) * CGFloat(day.healthScore) / 100.0
+                    ForEach(dailyHealth) { day in
+                        let normalizedHeight = minBarHeight + (maxBarHeight - minBarHeight) * CGFloat(day.healthScore) / 100.0
 
-                            Capsule()
-                                .fill(primaryBarColor)
-                                .frame(width: barWidth, height: normalizedHeight)
-                                .visualEffect { content, proxy in
-                                    let frame = proxy.frame(in: .scrollView)
-                                    let distance = abs(frame.midX - midX)
+                        Capsule()
+                            .fill(primaryBarColor)
+                            .frame(width: barWidth, height: normalizedHeight)
+                            .visualEffect { content, proxy in
+                                let frame = proxy.frame(in: .scrollView)
+                                let distance = abs(frame.midX - midX)
 
-                                    let influence = max(0, 1.0 - (distance / 35))
-                                    let needleFactor = pow(influence, 1.2)
+                                let influence = max(0, 1.0 - (distance / 35))
+                                let needleFactor = pow(influence, 1.2)
 
-                                    let normalizedDistance = min(distance / (midX * 0.9), 1.0)
-                                    let blurAmount = normalizedDistance * 3.0
+                                let normalizedDistance = min(distance / (midX * 0.9), 1.0)
+                                let blurAmount = normalizedDistance * 3.0
 
-                                    return content
-                                        .scaleEffect(y: 1.0 + (0.5 * needleFactor), anchor: .center)
-                                        .blur(radius: blurAmount)
-                                        .opacity(0.4 + (0.6 * (1.0 - normalizedDistance)))
-                                }
-                                .id(day.id)
-                        }
-
-                        // End spacer
-                        Color.clear.frame(width: midX - (barWidth / 2))
+                                return content
+                                    .scaleEffect(y: 1.0 + (0.5 * needleFactor), anchor: .center)
+                                    .blur(radius: blurAmount)
+                                    .opacity(0.4 + (0.6 * (1.0 - normalizedDistance)))
+                            }
+                            .id(day.id)
                     }
-                    .scrollTargetLayout()
+
+                    // End spacer
+                    Color.clear.frame(width: midX - (barWidth / 2))
                 }
-                .scrollPosition(id: $scrollTarget)
-                .scrollTargetBehavior(.viewAligned)
-                .coordinateSpace(name: "scroll")
-                .sensoryFeedback(.selection, trigger: scrollTarget)
-                .onChange(of: scrollTarget) { _, newValue in
-                    guard let id = newValue else { return }
-                    withAnimation(.easeInOut(duration: 0.25)) {
-                        proxy.scrollTo(id, anchor: .center)
-                    }
-                }
+                .scrollTargetLayout()
             }
+            .scrollPosition(id: $scrollTarget)
+            .scrollTargetBehavior(.viewAligned)
+            .coordinateSpace(name: "scroll")
+            .sensoryFeedback(.selection, trigger: scrollTarget)
         }
         .frame(height: maxBarHeight * 1.8)
         .mask(

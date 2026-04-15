@@ -263,8 +263,8 @@ struct HomeView: View {
                 withAnimation(.easeInOut(duration: 0.25)) {
                     selectedDate = day.date
                     selectedHealthScore = day.healthScore
+                    timelineScrollTarget = day.id
                 }
-                timelineScrollTarget = day.id
                 try? await Task.sleep(nanoseconds: 350_000_000)
             }
             isPlaying = false

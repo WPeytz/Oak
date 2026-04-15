@@ -14,13 +14,42 @@ struct InsightsView: View {
         ZStack {
             figmaLightBg.ignoresSafeArea()
 
-            if isLoading {
-                ProgressView()
-            } else {
-                ScrollView {
-                    VStack(spacing: 16) {
-                        // Summary pills
-                        if !transactions.isEmpty {
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Text("History")
+                        .font(.largeTitle.bold())
+                        .foregroundStyle(darkGreen)
+                    Spacer()
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+
+                if isLoading {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                } else if transactions.isEmpty {
+                    Spacer()
+                    VStack(spacing: 12) {
+                        Image(systemName: "tray")
+                            .font(.system(size: 44))
+                            .foregroundStyle(greenText.opacity(0.6))
+                        Text("No transactions yet")
+                            .font(.headline)
+                            .foregroundStyle(darkGreen)
+                        Text("Import a CSV from Settings to see your history.")
+                            .font(.subheadline)
+                            .foregroundStyle(greenText)
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 32)
+                    }
+                    Spacer()
+                } else {
+                    ScrollView {
+                        VStack(spacing: 16) {
+                            // Summary pills
                             HStack(spacing: 12) {
                                 SummaryPill(
                                     label: "Income",
@@ -39,34 +68,34 @@ struct InsightsView: View {
                                 )
                             }
                             .padding(.horizontal, 20)
-                            .padding(.top, 12)
-                        }
+                            .padding(.top, 4)
 
-                        // Grouped transactions
-                        let grouped = groupTransactions(transactions)
-                        ForEach(grouped, id: \.date) { group in
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text(group.displayDate)
-                                    .font(.subheadline.weight(.medium))
-                                    .foregroundStyle(greenText)
-                                    .padding(.horizontal, 20)
+                            // Grouped transactions
+                            let grouped = groupTransactions(transactions)
+                            ForEach(grouped, id: \.date) { group in
+                                VStack(alignment: .leading, spacing: 8) {
+                                    Text(group.displayDate)
+                                        .font(.subheadline.weight(.medium))
+                                        .foregroundStyle(greenText)
+                                        .padding(.horizontal, 20)
 
-                                VStack(spacing: 0) {
-                                    ForEach(Array(group.transactions.enumerated()), id: \.element.id) { index, txn in
-                                        TransactionRow(transaction: txn)
+                                    VStack(spacing: 0) {
+                                        ForEach(Array(group.transactions.enumerated()), id: \.element.id) { index, txn in
+                                            TransactionRow(transaction: txn)
 
-                                        if index < group.transactions.count - 1 {
-                                            Divider()
-                                                .padding(.horizontal, 16)
+                                            if index < group.transactions.count - 1 {
+                                                Divider()
+                                                    .padding(.horizontal, 16)
+                                            }
                                         }
                                     }
+                                    .insightsGoalCardStyle()
+                                    .padding(.horizontal, 24)
                                 }
-                                .insightsGoalCardStyle()
-                                .padding(.horizontal, 24)
                             }
-                        }
 
-                        Color.clear.frame(height: 80)
+                            Color.clear.frame(height: 80)
+                        }
                     }
                 }
             }
@@ -102,13 +131,18 @@ struct InsightsView: View {
     }
 
     private func loadData() async {
-        guard let userId = appState.userId else { return }
+        guard let userId = appState.userId else {
+            isLoading = false
+            return
+        }
         do {
             async let d = APIClient.shared.getDashboard(userId: userId)
             async let t = APIClient.shared.listTransactions(userId: userId)
             dashboard = try await d
             transactions = try await t
-        } catch {}
+        } catch {
+            print("InsightsView loadData error: \(error)")
+        }
         isLoading = false
     }
 }
