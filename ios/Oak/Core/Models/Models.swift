@@ -178,6 +178,12 @@ struct UpdateSavingsGoalRequest: Codable {
 struct CreateUserRequest: Codable {
     let email: String
     let name: String
+    let password: String
+}
+
+struct LoginRequest: Codable {
+    let email: String
+    let password: String
 }
 
 struct UpsertGoalRequest: Codable {

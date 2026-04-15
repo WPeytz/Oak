@@ -68,12 +68,15 @@ class APIClient {
 
     // MARK: - Users
 
-    func createUser(email: String, name: String) async throws -> User {
-        try await post("api/users/", body: CreateUserRequest(email: email, name: name))
+    func createUser(email: String, name: String, password: String) async throws -> User {
+        try await post(
+            "api/users/",
+            body: CreateUserRequest(email: email, name: name, password: password)
+        )
     }
 
-    func loginUser(email: String) async throws -> User {
-        try await post("api/users/login", body: CreateUserRequest(email: email, name: ""))
+    func loginUser(email: String, password: String) async throws -> User {
+        try await post("api/users/login", body: LoginRequest(email: email, password: password))
     }
 
     func getUser(id: UUID) async throws -> User {

@@ -3,9 +3,9 @@ import uuid
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.api.schemas.users import CreateUserRequest, UserResponse
+from app.api.schemas.users import CreateUserRequest, LoginRequest, UserResponse
 from app.db.session import get_db
-from app.services.user_service import UserService
+from app.services.user_service import UserService, verify_password
 
 router = APIRouter()
 
@@ -19,20 +19,20 @@ async def create_user(
     existing = await svc.get_by_email(body.email)
     if existing:
         raise HTTPException(status_code=409, detail="Email already registered")
-    user = await svc.create(email=body.email, name=body.name)
+    user = await svc.create(email=body.email, name=body.name, password=body.password)
     await db.commit()
     return user
 
 
 @router.post("/login", response_model=UserResponse)
 async def login_user(
-    body: CreateUserRequest,
+    body: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
     svc = UserService(db)
     user = await svc.get_by_email(body.email)
-    if not user:
-        raise HTTPException(status_code=404, detail="No account found with that email")
+    if not user or not user.password_hash or not verify_password(body.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
     return user
 
 

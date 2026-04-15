@@ -6,6 +6,7 @@ struct WelcomeView: View {
 
     @State private var showLogin = false
     @State private var loginEmail = ""
+    @State private var loginPassword = ""
     @State private var isLoggingIn = false
     @State private var loginError: String?
 
@@ -92,6 +93,18 @@ struct WelcomeView: View {
                 }
                 .padding(.horizontal, 32)
 
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Password")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(Color(red: 0.2, green: 0.45, blue: 0.25))
+                    SecureField("Enter your password", text: $loginPassword)
+                        .textContentType(.password)
+                        .padding()
+                        .background(.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .padding(.horizontal, 32)
+
                 if let loginError {
                     Text(loginError)
                         .font(.caption)
@@ -117,7 +130,7 @@ struct WelcomeView: View {
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 14))
                 }
-                .disabled(loginEmail.isEmpty || isLoggingIn)
+                .disabled(loginEmail.isEmpty || loginPassword.isEmpty || isLoggingIn)
                 .padding(.horizontal, 32)
                 .padding(.bottom, 32)
             }
@@ -142,7 +155,9 @@ struct WelcomeView: View {
         isLoggingIn = true
         loginError = nil
         do {
-            let user = try await APIClient.shared.loginUser(email: loginEmail)
+            let user = try await APIClient.shared.loginUser(
+                email: loginEmail, password: loginPassword
+            )
             showLogin = false
             onSignIn(user)
         } catch {

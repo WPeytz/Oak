@@ -102,7 +102,7 @@ struct CreateAccountView: View {
         Task {
             do {
                 let user = try await APIClient.shared.createUser(
-                    email: email, name: fullName
+                    email: email, name: fullName, password: password
                 )
                 onCreated(user)
             } catch let error as APIError {
