@@ -317,7 +317,7 @@ struct AddSavingsSheet: View {
                 }
                 .disabled(clampedAmount <= 0 || isSaving)
                 .opacity((clampedAmount <= 0 || isSaving) ? 0.5 : 1)
-                .offset(y: -35)
+                .padding(.bottom, 20)
             }
             .padding(30)
             .navigationTitle("Add Savings")
