@@ -115,8 +115,10 @@ def parse_danske_bank_csv(content: str) -> list[dict]:
 
 
 def _parse_nordea_date(s: str) -> date:
-    """Parse 'dd/mm/yyyy' to date."""
-    parts = s.strip().split("/")
+    """Parse Nordea date: accepts 'dd.mm.yyyy' or 'dd/mm/yyyy'."""
+    raw = s.strip()
+    sep = "." if "." in raw else "/"
+    parts = raw.split(sep)
     return date(int(parts[2]), int(parts[1]), int(parts[0]))
 
 
