@@ -1,4 +1,4 @@
-"""Parse Danish bank CSV exports (Danske Bank, Nordea) and import as transactions."""
+"""Parse Danish bank CSV exports (Danske Bank, Nordea, Lån og Spar) and import as transactions."""
 
 import csv
 import hashlib
@@ -178,12 +178,78 @@ def parse_nordea_csv(content: str) -> list[dict]:
     return transactions
 
 
+def _parse_lsb_date(s: str) -> date:
+    """Parse 'dd-mm-yyyy' to date."""
+    parts = s.strip().split("-")
+    return date(int(parts[2]), int(parts[1]), int(parts[0]))
+
+
+def parse_lsb_csv(content: str) -> list[dict]:
+    """Parse a Lån og Spar Bank CSV string into a list of transaction dicts.
+
+    Columns: Dato;Tekst;Beløb;Saldo
+    Date format: dd-mm-yyyy. Amount: Danish decimal (e.g. -450,50).
+    """
+    content = content.lstrip("\ufeff")
+    reader = csv.reader(io.StringIO(content), delimiter=";", quotechar='"')
+
+    header = next(reader, None)
+    if not header:
+        return []
+
+    transactions = []
+    for idx, row in enumerate(reader):
+        if len(row) < 3:
+            continue
+
+        dato = row[0].strip().strip('"')
+        tekst = row[1].strip().strip('"')
+        belob = row[2].strip().strip('"')
+
+        if not dato or not belob:
+            continue
+
+        try:
+            booked_at = _parse_lsb_date(dato)
+            amount = _parse_danish_amount(belob)
+        except (ValueError, IndexError, ArithmeticError):
+            continue
+
+        merchant = normalize_merchant(tekst)
+        cat_result = categorize_transaction(
+            merchant=merchant,
+            raw_description=tekst,
+            raw_category=None,
+            amount=float(amount),
+        )
+
+        transactions.append({
+            "provider_transaction_id": _generate_transaction_id(dato, tekst, belob, idx),
+            "booked_at": booked_at,
+            "value_date": booked_at,
+            "amount": amount,
+            "currency": "DKK",
+            "merchant": merchant,
+            "raw_description": tekst,
+            "raw_category": None,
+            "normalized_category": cat_result.normalized_category,
+            "is_essential": cat_result.is_essential,
+            "source": "csv",
+        })
+
+    return transactions
+
+
 def _detect_and_parse_csv(content: str) -> list[dict]:
-    """Auto-detect CSV format (Danske Bank vs Nordea) and parse accordingly."""
+    """Auto-detect CSV format (Danske Bank, Nordea, Lån og Spar) and parse accordingly."""
     first_line = content.lstrip("\ufeff").split("\n", 1)[0].lower()
 
     if "bogføringsdato" in first_line or "bogforingsdato" in first_line:
         return parse_nordea_csv(content)
+
+    # Lån og Spar: Dato;Tekst;Beløb;Saldo
+    if "tekst" in first_line and "saldo" in first_line:
+        return parse_lsb_csv(content)
 
     # Default to Danske Bank format
     return parse_danske_bank_csv(content)
