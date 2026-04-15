@@ -163,7 +163,6 @@ struct GoalCardView: View {
             .foregroundStyle(.gray.opacity(0.6))
         }
         .padding(20)
-        .padding(.trailing, 18)
         .background(Color.white)
         .cornerRadius(28)
         .overlay(alignment: .trailing) {

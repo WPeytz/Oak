@@ -163,14 +163,14 @@ struct GoalCardView: View {
             .foregroundStyle(.gray.opacity(0.6))
         }
         .padding(20)
-        .padding(.trailing, 18)
+        .padding(.trailing, 20)
         .background(Color.white)
         .cornerRadius(28)
         .overlay(alignment: .trailing) {
             Image(systemName: "chevron.right")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(figmaDarkGreen.opacity(0.35))
-                .padding(.trailing, 18)
+                .padding(.trailing, 20)
         }
         .padding(.horizontal, 24)
         .shadow(color: Color.black.opacity(0.03), radius: 10, x: 0, y: 5)
