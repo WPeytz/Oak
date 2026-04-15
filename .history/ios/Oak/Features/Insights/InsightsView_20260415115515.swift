@@ -8,11 +8,19 @@ struct InsightsView: View {
 
     private let greenText = Color(red: 0.3, green: 0.5, blue: 0.33)
     private let darkGreen = Color(red: 0.15, green: 0.3, blue: 0.18)
-    private let figmaLightBg = Color(red: 0.92, green: 0.97, blue: 0.92)
 
     var body: some View {
         ZStack {
-            figmaLightBg.ignoresSafeArea()
+            LinearGradient(
+                colors: [
+                    Color(red: 0.85, green: 0.96, blue: 0.87),
+                    Color(red: 0.75, green: 0.92, blue: 0.78),
+                    Color(red: 0.65, green: 0.85, blue: 0.68)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .ignoresSafeArea()
 
             if isLoading {
                 ProgressView()
