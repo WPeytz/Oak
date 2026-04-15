@@ -6,13 +6,66 @@ struct DayHealth: Identifiable {
     let healthScore: Int // 0-100
 }
 
+func computeDailyHealth(
+    transactions: [Transaction],
+    fallbackScore: Int
+) -> [DayHealth] {
+    let calendar = Calendar.current
+    let grouped = Dictionary(grouping: transactions) { txn in
+        calendar.startOfDay(for: txn.bookedAt)
+    }
+    let sortedDates = grouped.keys.sorted()
+    guard let firstDate = sortedDates.first,
+          let lastDate = sortedDates.last else {
+        return [DayHealth(id: 0, date: Date(), healthScore: fallbackScore)]
+    }
+
+    var days: [DayHealth] = []
+    var currentDate = firstDate
+    var idx = 0
+    var cumulativeIncome: Double = 0
+    var cumulativeSpending: Double = 0
+
+    while currentDate <= lastDate {
+        if let dayTxns = grouped[currentDate] {
+            for txn in dayTxns {
+                let amount = NSDecimalNumber(decimal: txn.amount).doubleValue
+                if amount > 0 { cumulativeIncome += amount }
+                else { cumulativeSpending += abs(amount) }
+            }
+        }
+
+        let score: Int
+        if cumulativeIncome > 0 {
+            let ratio = cumulativeSpending / cumulativeIncome
+            score = max(0, min(100, Int((1.0 - ratio) * 100)))
+        } else if cumulativeSpending > 0 {
+            score = 0
+        } else {
+            score = 100
+        }
+
+        days.append(DayHealth(id: idx, date: currentDate, healthScore: score))
+        currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
+        idx += 1
+    }
+
+    let today = calendar.startOfDay(for: Date())
+    if let last = days.last, last.date < today {
+        days.append(DayHealth(id: idx, date: today, healthScore: last.healthScore))
+    }
+    return days
+}
+
 struct HealthBarView: View {
     let healthScore: Int
     let transactions: [Transaction]
     let onDateSelected: (Date, Int) -> Void
+    @Binding var scrollTarget: Int?
 
-    @State private var scrollTarget: Int?
-    @State private var dailyHealth: [DayHealth] = []
+    private var dailyHealth: [DayHealth] {
+        computeDailyHealth(transactions: transactions, fallbackScore: healthScore)
+    }
 
     private let primaryBarColor = Color(red: 92/255, green: 157/255, blue: 84/255)
     private let barWidth: CGFloat = 5
@@ -26,44 +79,52 @@ struct HealthBarView: View {
         GeometryReader { container in
             let midX = container.size.width / 2
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(alignment: .center, spacing: spacing) {
-                    // Start spacer
-                    Color.clear.frame(width: midX - (barWidth / 2))
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: false) {
+                    LazyHStack(alignment: .center, spacing: spacing) {
+                        // Start spacer
+                        Color.clear.frame(width: midX - (barWidth / 2))
 
-                    ForEach(dailyHealth) { day in
-                        let normalizedHeight = minBarHeight + (maxBarHeight - minBarHeight) * CGFloat(day.healthScore) / 100.0
+                        ForEach(dailyHealth) { day in
+                            let normalizedHeight = minBarHeight + (maxBarHeight - minBarHeight) * CGFloat(day.healthScore) / 100.0
 
-                        Capsule()
-                            .fill(primaryBarColor)
-                            .frame(width: barWidth, height: normalizedHeight)
-                            .visualEffect { content, proxy in
-                                let frame = proxy.frame(in: .scrollView)
-                                let distance = abs(frame.midX - midX)
+                            Capsule()
+                                .fill(primaryBarColor)
+                                .frame(width: barWidth, height: normalizedHeight)
+                                .visualEffect { content, proxy in
+                                    let frame = proxy.frame(in: .scrollView)
+                                    let distance = abs(frame.midX - midX)
 
-                                let influence = max(0, 1.0 - (distance / 35))
-                                let needleFactor = pow(influence, 1.2)
+                                    let influence = max(0, 1.0 - (distance / 35))
+                                    let needleFactor = pow(influence, 1.2)
 
-                                let normalizedDistance = min(distance / (midX * 0.9), 1.0)
-                                let blurAmount = normalizedDistance * 3.0
+                                    let normalizedDistance = min(distance / (midX * 0.9), 1.0)
+                                    let blurAmount = normalizedDistance * 3.0
 
-                                return content
-                                    .scaleEffect(y: 1.0 + (0.5 * needleFactor), anchor: .center)
-                                    .blur(radius: blurAmount)
-                                    .opacity(0.4 + (0.6 * (1.0 - normalizedDistance)))
-                            }
-                            .id(day.id)
+                                    return content
+                                        .scaleEffect(y: 1.0 + (0.5 * needleFactor), anchor: .center)
+                                        .blur(radius: blurAmount)
+                                        .opacity(0.4 + (0.6 * (1.0 - normalizedDistance)))
+                                }
+                                .id(day.id)
+                        }
+
+                        // End spacer
+                        Color.clear.frame(width: midX - (barWidth / 2))
                     }
-
-                    // End spacer
-                    Color.clear.frame(width: midX - (barWidth / 2))
+                    .scrollTargetLayout()
                 }
-                .scrollTargetLayout()
+                .scrollPosition(id: $scrollTarget)
+                .scrollTargetBehavior(.viewAligned)
+                .coordinateSpace(name: "scroll")
+                .sensoryFeedback(.selection, trigger: scrollTarget)
+                .onChange(of: scrollTarget) { _, newValue in
+                    guard let id = newValue else { return }
+                    withAnimation(.easeInOut(duration: 0.25)) {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                }
             }
-            .scrollPosition(id: $scrollTarget)
-            .scrollTargetBehavior(.viewAligned)
-            .coordinateSpace(name: "scroll")
-            .sensoryFeedback(.selection, trigger: scrollTarget)
         }
         .frame(height: maxBarHeight * 1.8)
         .mask(
@@ -79,10 +140,12 @@ struct HealthBarView: View {
             )
         )
         .onAppear {
-            buildDailyHealth()
+            if scrollTarget == nil {
+                scrollTarget = max(0, dailyHealth.count - 1)
+            }
         }
         .onChange(of: transactions.count) {
-            buildDailyHealth()
+            scrollTarget = max(0, dailyHealth.count - 1)
         }
         .onChange(of: scrollTarget) { _, newValue in
             guard let idx = newValue,
@@ -92,75 +155,15 @@ struct HealthBarView: View {
         }
     }
 
-    private func buildDailyHealth() {
-        let calendar = Calendar.current
-
-        // Group transactions by day
-        let grouped = Dictionary(grouping: transactions) { txn in
-            calendar.startOfDay(for: txn.bookedAt)
-        }
-
-        // Get date range
-        let sortedDates = grouped.keys.sorted()
-        guard let firstDate = sortedDates.first,
-              let lastDate = sortedDates.last else {
-            // No transactions — show a single bar for today
-            dailyHealth = [DayHealth(id: 0, date: Date(), healthScore: healthScore)]
-            scrollTarget = 0
-            return
-        }
-
-        // Build one entry per day from first to last transaction date
-        var days: [DayHealth] = []
-        var currentDate = firstDate
-        var idx = 0
-        var cumulativeIncome: Double = 0
-        var cumulativeSpending: Double = 0
-
-        while currentDate <= lastDate {
-            // Add this day's transactions
-            if let dayTxns = grouped[currentDate] {
-                for txn in dayTxns {
-                    let amount = NSDecimalNumber(decimal: txn.amount).doubleValue
-                    if amount > 0 {
-                        cumulativeIncome += amount
-                    } else {
-                        cumulativeSpending += abs(amount)
-                    }
-                }
-            }
-
-            // Calculate health score for this day
-            let score: Int
-            if cumulativeIncome > 0 {
-                let ratio = cumulativeSpending / cumulativeIncome
-                // ratio 0 = perfect (100), ratio >= 1 = bad (0)
-                score = max(0, min(100, Int((1.0 - ratio) * 100)))
-            } else if cumulativeSpending > 0 {
-                score = 0
-            } else {
-                score = 100
-            }
-
-            days.append(DayHealth(id: idx, date: currentDate, healthScore: score))
-            currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
-            idx += 1
-        }
-
-        // Also add today if not included
-        let today = calendar.startOfDay(for: Date())
-        if let last = days.last, last.date < today {
-            days.append(DayHealth(id: idx, date: today, healthScore: days.last?.healthScore ?? healthScore))
-        }
-
-        dailyHealth = days
-        // Start scrolled to the last day (today)
-        scrollTarget = days.count - 1
-    }
 }
 
 #Preview {
-    HealthBarView(healthScore: 50, transactions: []) { _, _ in }
-        .frame(width: 350, height: 100)
-        .background(Color.gray.opacity(0.1))
+    HealthBarView(
+        healthScore: 50,
+        transactions: [],
+        onDateSelected: { _, _ in },
+        scrollTarget: .constant(nil)
+    )
+    .frame(width: 350, height: 100)
+    .background(Color.gray.opacity(0.1))
 }
