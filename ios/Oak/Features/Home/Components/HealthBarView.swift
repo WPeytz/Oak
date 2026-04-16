@@ -57,15 +57,21 @@ func computeDailyHealth(
     return days
 }
 
+// MARK: - Scroll behavior that does nothing (no snapping)
+struct PassthroughScrollBehavior: ScrollTargetBehavior {
+    func updateTarget(_ target: inout ScrollTarget, context: TargetContext) {}
+}
+
 struct HealthBarView: View {
     let healthScore: Int
     let transactions: [Transaction]
     let onDateSelected: (Date, Int) -> Void
     @Binding var scrollTarget: Int?
+    var isPlaying: Bool = false
 
-    private var dailyHealth: [DayHealth] {
-        computeDailyHealth(transactions: transactions, fallbackScore: healthScore)
-    }
+    @State private var cachedDailyHealth: [DayHealth] = []
+
+    private var dailyHealth: [DayHealth] { cachedDailyHealth }
 
     private let primaryBarColor = Color(red: 92/255, green: 157/255, blue: 84/255)
     private let barWidth: CGFloat = 5
@@ -79,44 +85,7 @@ struct HealthBarView: View {
         GeometryReader { container in
             let midX = container.size.width / 2
 
-            ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(alignment: .center, spacing: spacing) {
-                    // Start spacer
-                    Color.clear.frame(width: midX - (barWidth / 2))
-
-                    ForEach(dailyHealth) { day in
-                        let normalizedHeight = minBarHeight + (maxBarHeight - minBarHeight) * CGFloat(day.healthScore) / 100.0
-
-                        Capsule()
-                            .fill(primaryBarColor)
-                            .frame(width: barWidth, height: normalizedHeight)
-                            .visualEffect { content, proxy in
-                                let frame = proxy.frame(in: .scrollView)
-                                let distance = abs(frame.midX - midX)
-
-                                let influence = max(0, 1.0 - (distance / 35))
-                                let needleFactor = pow(influence, 1.2)
-
-                                let normalizedDistance = min(distance / (midX * 0.9), 1.0)
-                                let blurAmount = normalizedDistance * 3.0
-
-                                return content
-                                    .scaleEffect(y: 1.0 + (0.5 * needleFactor), anchor: .center)
-                                    .blur(radius: blurAmount)
-                                    .opacity(0.4 + (0.6 * (1.0 - normalizedDistance)))
-                            }
-                            .id(day.id)
-                    }
-
-                    // End spacer
-                    Color.clear.frame(width: midX - (barWidth / 2))
-                }
-                .scrollTargetLayout()
-            }
-            .scrollPosition(id: $scrollTarget)
-            .scrollTargetBehavior(.viewAligned)
-            .coordinateSpace(name: "scroll")
-            .sensoryFeedback(.selection, trigger: scrollTarget)
+            timelineScroll(midX: midX)
         }
         .frame(height: maxBarHeight * 1.8)
         .mask(
@@ -132,14 +101,17 @@ struct HealthBarView: View {
             )
         )
         .onAppear {
+            cachedDailyHealth = computeDailyHealth(transactions: transactions, fallbackScore: healthScore)
             if scrollTarget == nil {
                 scrollTarget = max(0, dailyHealth.count - 1)
             }
         }
         .onChange(of: transactions.count) {
+            cachedDailyHealth = computeDailyHealth(transactions: transactions, fallbackScore: healthScore)
             scrollTarget = max(0, dailyHealth.count - 1)
         }
         .onChange(of: scrollTarget) { _, newValue in
+            guard !isPlaying else { return }
             guard let idx = newValue,
                   idx >= 0, idx < dailyHealth.count else { return }
             let day = dailyHealth[idx]
@@ -147,6 +119,50 @@ struct HealthBarView: View {
         }
     }
 
+    @ViewBuilder
+    private func timelineScroll(midX: CGFloat) -> some View {
+        let scroll = ScrollView(.horizontal, showsIndicators: false) {
+            LazyHStack(alignment: .center, spacing: spacing) {
+                Color.clear.frame(width: midX - (barWidth / 2))
+
+                ForEach(dailyHealth) { day in
+                    barView(day: day, midX: midX)
+                        .id(day.id)
+                }
+
+                Color.clear.frame(width: midX - (barWidth / 2))
+            }
+            .scrollTargetLayout()
+        }
+        .scrollPosition(id: $scrollTarget)
+        .allowsHitTesting(!isPlaying)
+        .sensoryFeedback(.selection, trigger: scrollTarget)
+
+        if isPlaying {
+            scroll.scrollTargetBehavior(PassthroughScrollBehavior())
+        } else {
+            scroll.scrollTargetBehavior(.viewAligned)
+        }
+    }
+
+    private func barView(day: DayHealth, midX: CGFloat) -> some View {
+        let normalizedHeight = minBarHeight + (maxBarHeight - minBarHeight) * CGFloat(day.healthScore) / 100.0
+        return Capsule()
+            .fill(primaryBarColor)
+            .frame(width: barWidth, height: normalizedHeight)
+            .visualEffect { content, proxy in
+                let frame = proxy.frame(in: .scrollView)
+                let distance = abs(frame.midX - midX)
+                let influence = max(0, 1.0 - (distance / 35))
+                let needleFactor = pow(influence, 1.2)
+                let normalizedDistance = min(distance / (midX * 0.9), 1.0)
+                let blurAmount = normalizedDistance * 3.0
+                return content
+                    .scaleEffect(y: 1.0 + (0.5 * needleFactor), anchor: .center)
+                    .blur(radius: blurAmount)
+                    .opacity(0.4 + (0.6 * (1.0 - normalizedDistance)))
+            }
+    }
 }
 
 #Preview {

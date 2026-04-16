@@ -76,7 +76,8 @@ struct HomeView: View {
                             selectedDate = date
                             selectedHealthScore = score
                         },
-                        scrollTarget: $timelineScrollTarget
+                        scrollTarget: $timelineScrollTarget,
+                        isPlaying: isPlaying
                     )
                     .frame(height: 80)
                     .padding(.horizontal, 20)
@@ -256,15 +257,24 @@ struct HomeView: View {
         let days = computeDailyHealth(transactions: transactions, fallbackScore: fallback)
         guard days.count > 1 else { return }
 
+        let startIndex = timelineScrollTarget ?? 0
+        let playFrom = (startIndex >= days.count - 1) ? 0 : (startIndex + 1)
+
         isPlaying = true
+
+        // If restarting from beginning, jump there immediately
+        if playFrom == 0 {
+            selectedDate = days[0].date
+            selectedHealthScore = days[0].healthScore
+            timelineScrollTarget = days[0].id
+        }
+
         playbackTask = Task { @MainActor in
-            for day in days {
+            for day in days[playFrom...] {
                 if Task.isCancelled { break }
-                withAnimation(.easeInOut(duration: 0.25)) {
-                    selectedDate = day.date
-                    selectedHealthScore = day.healthScore
-                    timelineScrollTarget = day.id
-                }
+                selectedDate = day.date
+                selectedHealthScore = day.healthScore
+                timelineScrollTarget = day.id
                 try? await Task.sleep(nanoseconds: 350_000_000)
             }
             isPlaying = false
