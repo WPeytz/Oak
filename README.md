@@ -37,7 +37,30 @@ The API will be at `http://localhost:8000`. Check health at `/health`.
 
 ### iOS
 
-Open `ios/Oak/` in Xcode. The app targets iOS 17+.
+The app targets iOS 17+ and requires Xcode 16 or newer.
+
+**From Xcode (recommended):**
+
+1. Open `ios/Oak.xcodeproj`.
+2. Select the `Oak` scheme and an iPhone simulator (e.g. iPhone 17).
+3. Press ⌘R to build and run.
+
+**From the command line:**
+
+```bash
+# Build for the iPhone 17 simulator
+xcodebuild -project ios/Oak.xcodeproj -scheme Oak \
+  -destination 'platform=iOS Simulator,name=iPhone 17' build
+
+# Install and launch on a booted simulator
+xcrun simctl boot "iPhone 17"
+open -a Simulator
+xcrun simctl install booted \
+  ~/Library/Developer/Xcode/DerivedData/Oak-*/Build/Products/Debug-iphonesimulator/Oak.app
+xcrun simctl launch booted dk.oakapp.money
+```
+
+The app expects the backend on `http://localhost:8000` — start it first (see above).
 
 ### Full stack (Docker)
 
